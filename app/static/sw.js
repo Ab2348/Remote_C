@@ -1,14 +1,16 @@
-const CACHE_NAME = "remote-c-v15-audio-apps";
+const CACHE_NAME = "remote-c-v16-brightness";
 const APP_SHELL = [
   "/",
   "/styles.css",
   "/volume.css",
   "/now-playing.css",
   "/audio-apps.css",
+  "/brightness.css",
   "/app.js",
   "/volume.js",
   "/now-playing.js",
   "/audio-apps.js",
+  "/brightness.js",
   "/manifest.webmanifest",
   "/icon.svg",
 ];

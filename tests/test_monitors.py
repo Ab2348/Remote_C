@@ -164,5 +164,77 @@ class ScopedRefreshTests(unittest.IsolatedAsyncioTestCase):
         get_volume.assert_not_called()
 
 
+class BrightnessRefreshTests(unittest.IsolatedAsyncioTestCase):
+    async def test_recorded_brightness_is_not_republished(self) -> None:
+        monitor = SystemEventMonitors()
+        state = {
+            "volume": 20,
+            "brightness": {"display_1": 70, "display_2": 60},
+            "brightness_displays": [],
+        }
+        monitor.record_brightness_state(state)
+
+        with patch.object(
+            controller,
+            "get_brightness_state",
+            return_value={
+                "brightness": state["brightness"],
+                "brightness_displays": state["brightness_displays"],
+            },
+        ):
+            async with event_hub.subscribe() as queue:
+                await monitor._publish_brightness_if_changed()
+
+                with self.assertRaises(asyncio.TimeoutError):
+                    await asyncio.wait_for(queue.get(), timeout=0.02)
+
+    async def test_unchanged_brightness_is_not_published_twice(self) -> None:
+        monitor = SystemEventMonitors()
+        state = {
+            "brightness": {"display_1": 70, "display_2": 60},
+            "brightness_displays": [],
+        }
+
+        with patch.object(
+            controller,
+            "get_brightness_state",
+            return_value=state,
+        ):
+            async with event_hub.subscribe() as queue:
+                await monitor._publish_brightness_if_changed()
+                await monitor._publish_brightness_if_changed()
+                event_type, payload = await asyncio.wait_for(
+                    queue.get(),
+                    timeout=0.2,
+                )
+
+                with self.assertRaises(asyncio.TimeoutError):
+                    await asyncio.wait_for(queue.get(), timeout=0.02)
+
+        self.assertEqual(event_type, "brightness")
+        self.assertEqual(payload, state)
+
+    async def test_changed_brightness_is_published(self) -> None:
+        monitor = SystemEventMonitors()
+        states = [
+            {"brightness": {"display_1": 70, "display_2": 60}},
+            {"brightness": {"display_1": 80, "display_2": 60}},
+        ]
+
+        with patch.object(
+            controller,
+            "get_brightness_state",
+            side_effect=states,
+        ):
+            async with event_hub.subscribe() as queue:
+                await monitor._publish_brightness_if_changed()
+                await monitor._publish_brightness_if_changed()
+                first = await asyncio.wait_for(queue.get(), timeout=0.2)
+                second = await asyncio.wait_for(queue.get(), timeout=0.2)
+
+        self.assertEqual(first[1], states[0])
+        self.assertEqual(second[1], states[1])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -27,6 +27,7 @@ class SystemEventMonitors:
     def __init__(self) -> None:
         self._tasks: list[asyncio.Task] = []
         self._refresh_events: dict[RefreshKind, asyncio.Event] = {}
+        self._last_brightness_state: dict | None = None
 
     async def start(self) -> None:
         if self._tasks:
@@ -65,6 +66,14 @@ class SystemEventMonitors:
         await asyncio.gather(*self._tasks, return_exceptions=True)
         self._tasks.clear()
         self._refresh_events.clear()
+        self._last_brightness_state = None
+
+    def record_brightness_state(self, state: dict) -> None:
+        self._last_brightness_state = {
+            key: state[key]
+            for key in ("brightness", "brightness_displays")
+            if key in state
+        }
 
     async def _supervise(self, name: str, watcher: Watcher) -> None:
         while True:
@@ -153,10 +162,18 @@ class SystemEventMonitors:
                 continue
 
             try:
-                state = await asyncio.to_thread(controller.get_brightness_state)
-                await event_hub.publish("brightness", state)
+                await self._publish_brightness_if_changed()
             except BrightnessControlError:
                 logger.exception("No se pudo actualizar el brillo")
+
+    async def _publish_brightness_if_changed(self) -> None:
+        state = await asyncio.to_thread(controller.get_brightness_state)
+
+        if state == self._last_brightness_state:
+            return
+
+        self._last_brightness_state = state
+        await event_hub.publish("brightness", state)
 
     def _schedule_refresh(self, kind: RefreshKind) -> None:
         self._refresh_events[kind].set()

@@ -1,7 +1,6 @@
 const connection = document.querySelector("#connection");
 const mediaSessionsStatus = document.querySelector("#media-sessions-status");
 const mediaSessions = document.querySelector("#media-sessions");
-const brightnessValues = document.querySelector("#brightness-values");
 const actionButtons = [...document.querySelectorAll("button[data-endpoint]")];
 const audioOutput = document.querySelector("#audio-output");
 const setDefaultOutputButton = document.querySelector("#set-default-output");
@@ -33,10 +32,6 @@ function setConnection(online) {
 
 function render(state) {
   systemState = state;
-
-  const display1 = state.brightness.display_1;
-  const display2 = state.brightness.display_2;
-  brightnessValues.textContent = `Monitor 1: ${display1}% · Monitor 2: ${display2}%`;
 
   if (!mediaSessionsBusy) {
     renderMediaSessions(
@@ -411,6 +406,10 @@ forceOutputButton.addEventListener("click", () => {
 
 document.addEventListener("remote-c:audio-routing-update", (event) => {
   renderAudioRouting(event.detail);
+});
+
+document.addEventListener("remote-c:brightness-update", (event) => {
+  applyStatePatch(event.detail);
 });
 
 if ("EventSource" in window) {

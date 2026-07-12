@@ -37,6 +37,20 @@ class RemoteController:
     def change_brightness(self, action: str) -> dict:
         return self._brightness.change(action)
 
+    def change_display_brightness(
+        self,
+        display_key: str,
+        action: str,
+    ) -> dict:
+        return self._brightness.change_display(display_key, action)
+
+    def set_display_brightness(
+        self,
+        display_key: str,
+        brightness: int,
+    ) -> dict:
+        return self._brightness.set_display(display_key, brightness)
+
     def get_media_sessions(self) -> dict:
         return self._media.get_sessions()
 

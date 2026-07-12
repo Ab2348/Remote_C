@@ -14,9 +14,11 @@
     <link rel="stylesheet" href="/volume.css" />
     <link rel="stylesheet" href="/now-playing.css" />
     <link rel="stylesheet" href="/audio-apps.css" />
+    <link rel="stylesheet" href="/brightness.css" />
     <script src="/volume.js" defer></script>
     <script src="/now-playing.js" defer></script>
     <script src="/audio-apps.js" defer></script>
+    <script src="/brightness.js" defer></script>
     <script src="/app.js" defer></script>
   </head>
   <body>
@@ -212,13 +214,17 @@
             </span>
             <div>
               <h2 id="brightness-title">Brillo de monitores</h2>
-              <p id="brightness-values" class="section-status">Monitor 1: --% · Monitor 2: --%</p>
+              <p id="brightness-status" class="section-status">Cargando monitores</p>
             </div>
           </div>
         </div>
-        <div class="controls controls-two">
-          <button type="button" data-endpoint="brightness" data-action="down">− 10%</button>
-          <button type="button" data-endpoint="brightness" data-action="up">+ 10%</button>
+        <div id="brightness-displays" class="brightness-display-list" aria-live="polite"></div>
+        <div class="brightness-global-controls">
+          <p class="brightness-global-label">Ambos monitores</p>
+          <div class="controls controls-two">
+            <button type="button" data-endpoint="brightness" data-action="down">− 10%</button>
+            <button type="button" data-endpoint="brightness" data-action="up">+ 10%</button>
+          </div>
         </div>
       </section>
 

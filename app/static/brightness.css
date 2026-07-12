@@ -1,0 +1,79 @@
+.brightness-display-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0.62rem;
+  margin-top: 0.82rem;
+}
+
+.brightness-display {
+  display: grid;
+  gap: 0.58rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(122, 149, 191, 0.13);
+  border-radius: 0.88rem;
+  background: linear-gradient(145deg, rgba(20, 32, 51, 0.92), rgba(12, 21, 36, 0.88));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.brightness-display-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.brightness-display-heading h3 {
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: 0.91rem;
+  line-height: 1.3;
+}
+
+.brightness-display-heading p {
+  margin-top: 0.1rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.brightness-display-value {
+  flex: 0 0 auto;
+  min-width: 3.2rem;
+  color: #72a0ff;
+  font-size: 1rem;
+  font-weight: 760;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.brightness-display-slider {
+  min-width: 0;
+}
+
+.brightness-display-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.48rem;
+}
+
+.brightness-display-controls button {
+  min-height: 2.7rem;
+  font-size: 0.8rem;
+}
+
+.brightness-display.is-busy {
+  cursor: wait;
+  opacity: 0.76;
+}
+
+.brightness-global-controls {
+  margin-top: 0.72rem;
+  padding-top: 0.72rem;
+  border-top: 1px solid var(--border);
+}
+
+.brightness-global-label {
+  margin-bottom: 0.42rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}

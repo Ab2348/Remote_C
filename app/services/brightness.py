@@ -14,6 +14,7 @@ class BrightnessControlError(RuntimeError):
 class Display:
     key: str
     bus: int
+    label: str
 
 
 class DdcutilBrightnessService:
@@ -22,8 +23,8 @@ class DdcutilBrightnessService:
     VALUE_PATTERN = re.compile(r"VCP 10 C (\d+) (\d+)")
 
     DISPLAYS = (
-        Display(key="display_1", bus=3),
-        Display(key="display_2", bus=6),
+        Display(key="display_1", bus=3, label="LG UltraGear"),
+        Display(key="display_2", bus=6, label="GA271"),
     )
 
     def __init__(self) -> None:
@@ -41,9 +42,7 @@ class DdcutilBrightnessService:
             if cache_expired:
                 self._refresh()
 
-            return {
-                "brightness": self._cache.copy(),
-            }
+            return self._serialize_state()
 
     def change(self, action: str) -> dict:
         changes = {
@@ -81,9 +80,84 @@ class DdcutilBrightnessService:
             # cuando el brillo cambió mediante teclas o herramientas externas.
             self._refresh()
 
-            return {
-                "brightness": self._cache.copy(),
-            }
+            return self._serialize_state()
+
+    def change_display(self, display_key: str, action: str) -> dict:
+        changes = {
+            "up": ("+", 10),
+            "down": ("-", 10),
+        }
+        change = changes.get(str(action))
+
+        if change is None:
+            raise BrightnessControlError("Acción de brillo no permitida")
+
+        display = self._find_display(display_key)
+        operator, amount = change
+
+        with self._lock:
+            try:
+                self._run(
+                    "--bus",
+                    str(display.bus),
+                    "setvcp",
+                    self.VCP_CODE,
+                    operator,
+                    str(amount),
+                )
+            except BrightnessControlError:
+                self._last_refresh = 0.0
+                raise
+
+            self._refresh()
+            return self._serialize_state()
+
+    def set_display(self, display_key: str, brightness: int) -> dict:
+        if not 0 <= brightness <= 100:
+            raise BrightnessControlError(
+                "El brillo debe estar entre 0 y 100"
+            )
+
+        display = self._find_display(display_key)
+
+        with self._lock:
+            try:
+                self._run(
+                    "--bus",
+                    str(display.bus),
+                    "setvcp",
+                    self.VCP_CODE,
+                    str(brightness),
+                )
+            except BrightnessControlError:
+                self._last_refresh = 0.0
+                raise
+
+            self._refresh()
+            return self._serialize_state()
+
+    def _serialize_state(self) -> dict:
+        return {
+            "brightness": self._cache.copy(),
+            "brightness_displays": [
+                {
+                    "key": display.key,
+                    "label": display.label,
+                    "brightness": self._cache[display.key],
+                }
+                for display in self.DISPLAYS
+                if display.key in self._cache
+            ],
+        }
+
+    def _find_display(self, display_key: str) -> Display:
+        for display in self.DISPLAYS:
+            if display.key == display_key:
+                return display
+
+        raise BrightnessControlError(
+            "El monitor seleccionado no está disponible"
+        )
 
     def _refresh(self) -> None:
         results = self._run_parallel(self._read_display)

@@ -12,6 +12,7 @@ from app.services.brightness import BrightnessControlError
 from app.services.controller import controller
 from app.services.events import event_hub
 from app.services.media import MediaControlError
+from app.services.monitors import system_event_monitors
 from app.services.volume import VolumeControlError
 
 
@@ -56,6 +57,15 @@ class MediaSessionRequest(BaseModel):
 
 class BrightnessRequest(BaseModel):
     action: BrightnessAction
+
+
+class DisplayBrightnessRequest(BrightnessRequest):
+    display: str = Field(min_length=1, max_length=64)
+
+
+class DisplayBrightnessSetRequest(BaseModel):
+    display: str = Field(min_length=1, max_length=64)
+    brightness: int = Field(ge=0, le=100)
 
 
 class OutputRequest(BaseModel):
@@ -110,6 +120,7 @@ async def events(request: Request) -> StreamingResponse:
                 yield _sse_event("server-error", {"detail": str(error)})
                 return
 
+            system_event_monitors.record_brightness_state(state)
             yield _sse_event(
                 "snapshot",
                 {"state": state, "audio_routing": routing},
@@ -186,12 +197,45 @@ async def control_media_session(request: MediaSessionRequest) -> dict:
 @router.post("/brightness")
 async def control_brightness(request: BrightnessRequest) -> dict:
     try:
-        state = await asyncio.to_thread(
+        return await _publish_brightness(
             controller.change_brightness,
             request.action,
         )
-        await event_hub.publish("brightness", state)
-        return state
+    except BrightnessControlError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+async def _publish_brightness(action, *args) -> dict:
+    state = await asyncio.to_thread(action, *args)
+    system_event_monitors.record_brightness_state(state)
+    await event_hub.publish("brightness", state)
+    return state
+
+
+@router.post("/brightness/display/control")
+async def control_display_brightness(
+    request: DisplayBrightnessRequest,
+) -> dict:
+    try:
+        return await _publish_brightness(
+            controller.change_display_brightness,
+            request.display,
+            request.action,
+        )
+    except BrightnessControlError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.post("/brightness/display/set")
+async def set_display_brightness(
+    request: DisplayBrightnessSetRequest,
+) -> dict:
+    try:
+        return await _publish_brightness(
+            controller.set_display_brightness,
+            request.display,
+            request.brightness,
+        )
     except BrightnessControlError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
 

@@ -9,17 +9,17 @@ from app.services.events import event_hub
 from app.services.volume import VolumeControlError
 
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api/volume")
 
 
-class VolumeControlAction(StrEnum):
+class VolumeAction(StrEnum):
     UP = "up"
     DOWN = "down"
     MUTE = "mute"
 
 
-class VolumeControlRequest(BaseModel):
-    action: VolumeControlAction
+class VolumeActionRequest(BaseModel):
+    action: VolumeAction
 
 
 class VolumeSetRequest(BaseModel):
@@ -37,11 +37,11 @@ async def _publish_volume(state: dict) -> dict:
     return state
 
 
-@router.post("/volume/control")
-async def control_volume(request: VolumeControlRequest) -> dict:
+@router.post("/control")
+async def control_volume(request: VolumeActionRequest) -> dict:
     try:
         state = await asyncio.to_thread(
-            controller.change_volume_state,
+            controller.change_volume,
             request.action,
         )
         return await _publish_volume(state)
@@ -49,7 +49,7 @@ async def control_volume(request: VolumeControlRequest) -> dict:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
 
-@router.post("/volume/set")
+@router.post("/set")
 async def set_volume(request: VolumeSetRequest) -> dict:
     try:
         state = await asyncio.to_thread(

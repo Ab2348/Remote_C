@@ -52,6 +52,21 @@ class WpctlVolumeService:
 
         return self.get_state()
 
+    def set_volume(self, volume: int) -> dict:
+        if not 0 <= volume <= 100:
+            raise VolumeControlError(
+                "El volumen debe estar entre 0 y 100"
+            )
+
+        self._run(
+            "set-volume",
+            "--limit",
+            "1.0",
+            self.SINK,
+            f"{volume}%",
+        )
+        return self.get_state()
+
     @staticmethod
     def _run(*arguments: str) -> str:
         try:

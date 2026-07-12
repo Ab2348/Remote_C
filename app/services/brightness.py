@@ -18,7 +18,7 @@ class Display:
 
 class DdcutilBrightnessService:
     VCP_CODE = "10"
-    CACHE_SECONDS = 30
+    CACHE_SECONDS = 2
     VALUE_PATTERN = re.compile(r"VCP 10 C (\d+) (\d+)")
 
     DISPLAYS = (
@@ -61,9 +61,6 @@ class DdcutilBrightnessService:
         operator, amount = change
 
         with self._lock:
-            if not self._cache:
-                self._refresh()
-
             try:
                 self._run_parallel(
                     lambda display: self._run(
@@ -79,16 +76,10 @@ class DdcutilBrightnessService:
                 self._last_refresh = 0.0
                 raise
 
-            adjustment = amount if operator == "+" else -amount
-
-            for display in self.DISPLAYS:
-                current = self._cache[display.key]
-                self._cache[display.key] = max(
-                    0,
-                    min(100, current + adjustment),
-                )
-
-            self._last_refresh = time.monotonic()
+            # El cambio de DDC/CI es relativo al valor físico del monitor.
+            # Releer evita responder con un cálculo basado en una caché antigua
+            # cuando el brillo cambió mediante teclas o herramientas externas.
+            self._refresh()
 
             return {
                 "brightness": self._cache.copy(),

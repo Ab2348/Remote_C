@@ -1,4 +1,6 @@
 from pathlib import Path
+from enum import StrEnum
+
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -11,7 +13,7 @@ STATIC_DIR = BASE_DIR / "app" / "static"
 
 app = FastAPI(
     title="Remote C",
-    version="0.2.0",
+    version="0.3.0",
     description="Control remoto local para Arch Linux",
 )
 
@@ -22,7 +24,7 @@ app.include_router(router)
 def health() -> dict[str, str]:
     return {
         "status": "ok",
-        "mode": "simulation",
+        "mode": "hybrid",
     }
 
 

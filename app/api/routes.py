@@ -1,9 +1,10 @@
 from enum import StrEnum
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.services.simulated import controller
+from app.services.controller import controller
+from app.services.volume import VolumeControlError
 
 
 router = APIRouter(prefix="/api")
@@ -40,12 +41,18 @@ class BrightnessRequest(BaseModel):
 
 @router.get("/state")
 def get_state() -> dict:
-    return controller.get_state()
+    try:
+        return controller.get_state()
+    except VolumeControlError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
 
 
 @router.post("/volume")
 def control_volume(request: VolumeRequest) -> dict:
-    return controller.change_volume(request.action)
+    try:
+        return controller.change_volume(request.action)
+    except VolumeControlError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
 
 
 @router.post("/media")

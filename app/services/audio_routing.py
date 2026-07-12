@@ -22,6 +22,7 @@ class AudioStream:
     index: int
     sink: int
     application: str
+    icon_name: str
     media: str
     binary: str
     pid: str
@@ -83,6 +84,14 @@ class PactlAudioRoutingService:
                 {
                     "id": application_id,
                     "application": group[0].application,
+                    "icon_name": next(
+                        (
+                            stream.icon_name
+                            for stream in group
+                            if stream.icon_name
+                        ),
+                        group[0].binary,
+                    ),
                     "binary": group[0].binary,
                     "pids": list(
                         dict.fromkeys(stream.pid for stream in group if stream.pid)
@@ -314,6 +323,11 @@ class PactlAudioRoutingService:
                         properties.get("application.name")
                         or properties.get("application.process.binary")
                         or "Aplicación"
+                    ),
+                    icon_name=str(
+                        properties.get("application.icon_name")
+                        or properties.get("application.process.binary")
+                        or ""
                     ),
                     media=str(properties.get("media.name") or "Audio"),
                     binary=str(properties.get("application.process.binary") or ""),

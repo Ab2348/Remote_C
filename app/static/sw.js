@@ -1,4 +1,4 @@
-const CACHE_NAME = "remote-c-v19-unified-media";
+const CACHE_NAME = "remote-c-v20-media-resume-icons";
 const APP_SHELL = [
   "/",
   "/styles.css",

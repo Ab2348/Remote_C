@@ -51,6 +51,9 @@ class PlayerctlMediaService:
         "seek_forward": ("position", "10+"),
     }
 
+    def __init__(self) -> None:
+        self._preferred_player_name: str | None = None
+
     def get_state(self) -> dict:
         players = self._get_players()
         player = self._select_active_player(players)
@@ -123,6 +126,7 @@ class PlayerctlMediaService:
         if command is None:
             raise MediaControlError("Acción multimedia no permitida")
 
+        self._preferred_player_name = player.name
         self._run("--player", player.name, *command)
         return self.get_state()
 
@@ -137,6 +141,7 @@ class PlayerctlMediaService:
         if command is None:
             raise MediaControlError("Acción multimedia no permitida")
 
+        self._preferred_player_name = player_name
         self._run("--player", player_name, *command)
         return self.get_sessions()
 
@@ -160,17 +165,37 @@ class PlayerctlMediaService:
     def _get_active_player(self) -> PlayerState | None:
         return self._select_active_player(self._get_players())
 
-    @staticmethod
     def _select_active_player(
+        self,
         players: list[PlayerState],
     ) -> PlayerState | None:
         if not players:
+            self._preferred_player_name = None
             return None
 
-        return next(
+        selected = next(
             (player for player in players if player.status.casefold() == "playing"),
-            players[0],
+            None,
         )
+
+        if selected is None and self._preferred_player_name:
+            selected = next(
+                (
+                    player
+                    for player in players
+                    if player.name == self._preferred_player_name
+                ),
+                None,
+            )
+
+        if selected is None:
+            selected = next(
+                (player for player in players if player.title or player.artist),
+                players[0],
+            )
+
+        self._preferred_player_name = selected.name
+        return selected
 
     def _get_players(self) -> list[PlayerState]:
         players: list[PlayerState] = []

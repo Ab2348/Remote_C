@@ -38,6 +38,16 @@
   font-weight: 800;
 }
 
+.audio-application-icon img {
+  width: 1.8rem;
+  height: 1.8rem;
+  object-fit: contain;
+}
+
+.audio-application-icon.has-image .audio-application-icon-fallback {
+  display: none;
+}
+
 .audio-application-icon[data-app="brave"] {
   border-color: rgba(255, 109, 45, 0.36);
   background: rgba(255, 86, 24, 0.16);
@@ -140,6 +150,16 @@
   padding: 0;
   place-items: center;
   font-size: 1rem;
+}
+
+.audio-application-mute svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .audio-application-mute[aria-pressed="true"] {

@@ -93,14 +93,19 @@
   }
 
   function renderNowPlaying(state) {
-    const rawTrack = String(state.current_track ?? "Sin reproducción").trim();
+    const session = activeSession(state);
+    const stateTrack = String(state.current_track ?? "").trim();
+    const rawTrack = (
+      !stateTrack || stateTrack.toLocaleLowerCase("es") === "sin reproducción"
+        ? String(session?.current_track ?? "Sin reproducción")
+        : stateTrack
+    ).trim();
     const normalizedTrack = rawTrack.toLocaleLowerCase("es");
     const empty = normalizedTrack === "" || normalizedTrack === "sin reproducción";
     const rawStatus = String(state.playback_status ?? "stopped").toLowerCase();
     const playbackStatus = ["playing", "paused"].includes(rawStatus)
       ? rawStatus
       : "stopped";
-    const session = activeSession(state);
     const parsed = splitTrack(rawTrack);
 
     panel.classList.toggle("is-empty", empty);
@@ -129,7 +134,7 @@
     playButton.classList.toggle("is-playing", playing);
     playButton.setAttribute("aria-label", playLabel);
     playButton.title = playLabel;
-    setButtonAvailability(!empty);
+    setButtonAvailability(session !== null);
   }
 
   document.addEventListener("remote-c:state", (event) => {

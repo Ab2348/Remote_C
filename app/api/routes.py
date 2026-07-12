@@ -17,6 +17,10 @@ from fastapi.responses import (
 )
 from pydantic import BaseModel, Field
 
+from app.services.application_icons import (
+    ApplicationIconError,
+    application_icons,
+)
 from app.services.audio_routing import AudioRoutingError, audio_routing
 from app.services.brightness import BrightnessControlError
 from app.services.controller import controller
@@ -337,6 +341,26 @@ def get_audio_routing() -> dict:
         return audio_routing.get_state()
     except AudioRoutingError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.get("/audio-routing/application-icon/{icon_name}")
+async def get_application_icon(icon_name: str) -> FileResponse:
+    try:
+        path, media_type = await asyncio.to_thread(
+            application_icons.resolve,
+            icon_name,
+        )
+    except ApplicationIconError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+    return FileResponse(
+        path,
+        media_type=media_type,
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "Content-Security-Policy": "default-src 'none'; sandbox",
+        },
+    )
 
 
 async def _publish_audio_routing(action, *args) -> dict:

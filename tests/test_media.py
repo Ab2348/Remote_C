@@ -5,12 +5,18 @@ from unittest.mock import Mock
 from app.services.media import PlayerState, PlayerctlMediaService
 
 
-def player(*, art_url: str = "https://example.com/cover.jpg") -> PlayerState:
+def player(
+    *,
+    name: str = "spotify",
+    status: str = "Playing",
+    title: str = "Track",
+    art_url: str = "https://example.com/cover.jpg",
+) -> PlayerState:
     return PlayerState(
-        name="spotify",
-        label="Spotify",
-        status="Playing",
-        title="Track",
+        name=name,
+        label=name.title(),
+        status=status,
+        title=title,
         artist="Artist",
         art_url=art_url,
         duration_us=120_000_000,
@@ -105,6 +111,54 @@ class MediaArtworkTests(unittest.TestCase):
         self.assertEqual(
             service.get_artwork_url("spotify"),
             "https://example.com/cover.jpg",
+        )
+
+
+class ActivePlayerSelectionTests(unittest.TestCase):
+    def test_keeps_the_last_controlled_player_after_it_is_paused(self) -> None:
+        service = PlayerctlMediaService()
+        service._preferred_player_name = "brave.instance7003"
+
+        selected = service._select_active_player(
+            [
+                player(name="spotify", status="Paused", title="Otra canción"),
+                player(
+                    name="brave.instance7003",
+                    status="Paused",
+                    title="Canción pausada",
+                ),
+            ]
+        )
+
+        self.assertEqual(selected.name, "brave.instance7003")
+
+    def test_a_playing_player_takes_priority_over_the_previous_selection(self) -> None:
+        service = PlayerctlMediaService()
+        service._preferred_player_name = "brave.instance7003"
+
+        selected = service._select_active_player(
+            [
+                player(name="brave.instance7003", status="Paused"),
+                player(name="spotify", status="Playing"),
+            ]
+        )
+
+        self.assertEqual(selected.name, "spotify")
+        self.assertEqual(service._preferred_player_name, "spotify")
+
+    def test_session_control_updates_the_preferred_player(self) -> None:
+        service = PlayerctlMediaService()
+        service._list_player_names = Mock(return_value=["brave.instance7003"])
+        service._run = Mock(return_value="")
+        service.get_sessions = Mock(return_value={"players": []})
+
+        service.control_session("brave.instance7003", "play_pause")
+
+        self.assertEqual(service._preferred_player_name, "brave.instance7003")
+        service._run.assert_called_once_with(
+            "--player",
+            "brave.instance7003",
+            "play-pause",
         )
 
 

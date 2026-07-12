@@ -69,6 +69,7 @@
           application = {
             id: identity,
             application: session.label || "Reproductor multimedia",
+            icon_name: session.name.split(".instance", 1)[0],
             binary: "",
             media: [],
             stream_indexes: [],
@@ -128,6 +129,55 @@
 
   function appInitial(application) {
     return (application.trim().charAt(0) || "A").toLocaleUpperCase("es");
+  }
+
+  function speakerIcon(muted) {
+    const namespace = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(namespace, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+
+    const speaker = document.createElementNS(namespace, "path");
+    speaker.setAttribute("d", "M4 9.5v5h4l5 4v-13l-5 4H4Z");
+    svg.append(speaker);
+
+    const sound = document.createElementNS(namespace, "path");
+    sound.setAttribute(
+      "d",
+      muted
+        ? "m17 9 4 6m0-6-4 6"
+        : "M16 9a4 4 0 0 1 0 6m2-9a8 8 0 0 1 0 12",
+    );
+    svg.append(sound);
+    return svg;
+  }
+
+  function applicationIcon(application) {
+    const icon = document.createElement("span");
+    icon.className = "audio-application-icon";
+    icon.dataset.app = normalizeIdentity(application.application);
+    icon.setAttribute("aria-hidden", "true");
+
+    const fallback = document.createElement("span");
+    fallback.className = "audio-application-icon-fallback";
+    fallback.textContent = appInitial(application.application);
+    icon.append(fallback);
+
+    const iconName = String(
+      application.icon_name || application.binary || application.id || "",
+    ).trim();
+
+    if (iconName) {
+      const image = document.createElement("img");
+      image.alt = "";
+      image.loading = "lazy";
+      image.addEventListener("load", () => icon.classList.add("has-image"));
+      image.addEventListener("error", () => image.remove());
+      image.src = `/api/audio-routing/application-icon/${encodeURIComponent(iconName)}`;
+      icon.append(image);
+    }
+
+    return icon;
   }
 
   function setBusy(value) {
@@ -265,7 +315,7 @@
     const mute = document.createElement("button");
     mute.type = "button";
     mute.className = "audio-application-mute";
-    mute.textContent = application.muted ? "🔇" : "🔊";
+    mute.append(speakerIcon(application.muted));
     mute.setAttribute("aria-pressed", String(application.muted));
     mute.setAttribute(
       "aria-label",
@@ -375,11 +425,7 @@
     const heading = document.createElement("div");
     heading.className = "audio-application-heading";
 
-    const icon = document.createElement("span");
-    icon.className = "audio-application-icon";
-    icon.dataset.app = normalizeIdentity(application.application);
-    icon.setAttribute("aria-hidden", "true");
-    icon.textContent = appInitial(application.application);
+    const icon = applicationIcon(application);
 
     const copy = document.createElement("div");
     copy.className = "audio-application-copy";

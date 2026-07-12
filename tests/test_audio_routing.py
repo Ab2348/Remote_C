@@ -14,6 +14,7 @@ def stream(
     *,
     sink: int = 1,
     application: str = "Brave",
+    icon_name: str = "brave-browser",
     binary: str = "brave",
     pid: str = "7003",
     media: str = "Playback",
@@ -25,6 +26,7 @@ def stream(
         index=index,
         sink=sink,
         application=application,
+        icon_name=icon_name,
         media=media,
         binary=binary,
         pid=pid,
@@ -53,6 +55,7 @@ class AudioApplicationSerializationTests(unittest.TestCase):
         self.assertEqual(len(applications), 1)
         application = applications[0]
         self.assertEqual(application["id"], "brave")
+        self.assertEqual(application["icon_name"], "brave-browser")
         self.assertEqual(application["stream_indexes"], [94, 294])
         self.assertEqual(application["stream_count"], 2)
         self.assertEqual(application["volume"], 50)

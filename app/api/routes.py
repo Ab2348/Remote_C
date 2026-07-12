@@ -35,6 +35,14 @@ class MediaAction(StrEnum):
     NEXT = "next"
 
 
+class MediaSessionAction(StrEnum):
+    PLAY_PAUSE = "play_pause"
+    PREVIOUS = "previous"
+    NEXT = "next"
+    SEEK_BACKWARD = "seek_backward"
+    SEEK_FORWARD = "seek_forward"
+
+
 class BrightnessAction(StrEnum):
     UP = "up"
     DOWN = "down"
@@ -46,6 +54,11 @@ class VolumeRequest(BaseModel):
 
 class MediaRequest(BaseModel):
     action: MediaAction
+
+
+class MediaSessionRequest(BaseModel):
+    player: str = Field(min_length=1, max_length=256)
+    action: MediaSessionAction
 
 
 class BrightnessRequest(BaseModel):
@@ -90,6 +103,25 @@ def control_media(request: MediaRequest) -> dict:
     try:
         return controller.control_media(request.action)
     except CONTROL_ERRORS as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.get("/media/sessions")
+def get_media_sessions() -> dict:
+    try:
+        return controller.get_media_sessions()
+    except MediaControlError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.post("/media/sessions/control")
+def control_media_session(request: MediaSessionRequest) -> dict:
+    try:
+        return controller.control_media_session(
+            request.player,
+            request.action,
+        )
+    except MediaControlError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
 

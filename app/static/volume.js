@@ -1,14 +1,13 @@
 (() => {
   const panel = document.querySelector(".volume-panel");
   const slider = document.querySelector("#volume-slider");
-  const stateOutput = document.querySelector("#volume-value");
   const displayOutput = document.querySelector("#volume-display");
   const muteButton = document.querySelector("#mute-button");
   const volumeButtons = [
-    ...document.querySelectorAll('button[data-endpoint="volume"]'),
+    ...document.querySelectorAll("button[data-volume-action]"),
   ];
 
-  if (!panel || !slider || !stateOutput || !displayOutput || !muteButton) {
+  if (!panel || !slider || !displayOutput || !muteButton) {
     return;
   }
 
@@ -18,7 +17,7 @@
   let queuedVolume = null;
   let commitTimer = null;
   let lastConfirmedVolume = null;
-  let pendingRenderedVolume = null;
+  let pendingExternalVolume = null;
 
   function normalizePercentage(value) {
     const percentage = Number(value);
@@ -28,16 +27,6 @@
     }
 
     return Math.min(100, Math.max(0, Math.round(percentage)));
-  }
-
-  function parseRenderedVolume() {
-    const match = stateOutput.textContent.match(/-?\d+(?:\.\d+)?/);
-
-    if (match === null) {
-      return null;
-    }
-
-    return normalizePercentage(match[0]);
   }
 
   function renderSlider(value) {
@@ -60,6 +49,7 @@
 
   function applyMuteState(muted) {
     const label = muted ? "Activar sonido" : "Silenciar";
+    muteButton.textContent = label;
     muteButton.setAttribute("aria-pressed", String(muted));
     muteButton.setAttribute("aria-label", label);
     muteButton.title = label;
@@ -69,7 +59,7 @@
   function applyConfirmedState(state, { forceRender = false } = {}) {
     const percentage = normalizePercentage(state.volume);
     lastConfirmedVolume = percentage;
-    pendingRenderedVolume = null;
+    pendingExternalVolume = null;
     applyMuteState(Boolean(state.muted));
 
     if (
@@ -80,25 +70,17 @@
     }
   }
 
-  function syncVolumeFromRenderedState() {
-    const renderedVolume = parseRenderedVolume();
-
-    if (renderedVolume === null) {
-      return;
-    }
+  function applyExternalState(state) {
+    const volume = normalizePercentage(state.volume);
+    applyMuteState(Boolean(state.muted));
 
     if (volumeInteracting || requestInFlight) {
-      pendingRenderedVolume = renderedVolume;
+      pendingExternalVolume = volume;
       return;
     }
 
-    lastConfirmedVolume = renderedVolume;
-    renderLocalVolume(renderedVolume);
-  }
-
-  function syncMuteFromRenderedState() {
-    const label = muteButton.textContent.trim().toLocaleLowerCase("es");
-    applyMuteState(label.startsWith("activar"));
+    lastConfirmedVolume = volume;
+    renderLocalVolume(volume);
   }
 
   function setBusy(busy) {
@@ -123,12 +105,27 @@
   }
 
   function restoreLatestVolume() {
-    const value = pendingRenderedVolume ?? lastConfirmedVolume;
-    pendingRenderedVolume = null;
+    const value = pendingExternalVolume ?? lastConfirmedVolume;
+    pendingExternalVolume = null;
 
     if (value !== null) {
       renderLocalVolume(value);
     }
+  }
+
+  function applyPendingExternalVolume() {
+    if (
+      volumeInteracting
+      || requestInFlight
+      || pendingExternalVolume === null
+    ) {
+      return;
+    }
+
+    const volume = pendingExternalVolume;
+    pendingExternalVolume = null;
+    lastConfirmedVolume = volume;
+    renderLocalVolume(volume);
   }
 
   async function sendControl(action) {
@@ -149,6 +146,7 @@
     } finally {
       requestInFlight = false;
       setBusy(false);
+      applyPendingExternalVolume();
     }
   }
 
@@ -164,7 +162,7 @@
 
     if (
       requestedVolume === lastConfirmedVolume
-      && pendingRenderedVolume === null
+      && pendingExternalVolume === null
     ) {
       if (!volumeInteracting) {
         renderLocalVolume(requestedVolume);
@@ -193,11 +191,8 @@
         const nextVolume = queuedVolume;
         queuedVolume = null;
         sendSetVolume(nextVolume);
-      } else if (!volumeInteracting && pendingRenderedVolume !== null) {
-        const pendingVolume = pendingRenderedVolume;
-        pendingRenderedVolume = null;
-        lastConfirmedVolume = pendingVolume;
-        renderLocalVolume(pendingVolume);
+      } else {
+        applyPendingExternalVolume();
       }
     }
   }
@@ -220,34 +215,19 @@
   }
 
   volumeButtons.forEach((button) => {
-    button.addEventListener(
-      "click",
-      (event) => {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        sendControl(button.dataset.action);
-      },
-      { capture: true },
-    );
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      sendControl(button.dataset.volumeAction);
+    });
   });
 
-  const volumeObserver = new MutationObserver(syncVolumeFromRenderedState);
-  volumeObserver.observe(stateOutput, {
-    childList: true,
-    characterData: true,
-    subtree: true,
-  });
-
-  const muteObserver = new MutationObserver(syncMuteFromRenderedState);
-  muteObserver.observe(muteButton, {
-    childList: true,
-    characterData: true,
-    subtree: true,
+  document.addEventListener("remote-c:state", (event) => {
+    applyExternalState(event.detail);
   });
 
   slider.addEventListener("pointerdown", () => {
     volumeInteracting = true;
-    pendingRenderedVolume = null;
+    pendingExternalVolume = null;
   });
 
   slider.addEventListener("input", () => {
@@ -272,6 +252,4 @@
     restoreLatestVolume();
   });
 
-  syncVolumeFromRenderedState();
-  syncMuteFromRenderedState();
 })();

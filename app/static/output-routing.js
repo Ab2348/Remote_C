@@ -41,6 +41,7 @@
   function setBusy(value) {
     busy = value;
     panel.classList.toggle("is-busy", value);
+    panel.setAttribute("aria-busy", String(value));
     container.querySelectorAll("button").forEach((button) => {
       button.disabled = value;
     });
@@ -89,6 +90,7 @@
     card.dataset.outputName = output.name;
     card.setAttribute("role", "radio");
     card.setAttribute("aria-checked", String(output.name === selectedName));
+    card.tabIndex = output.name === selectedName ? 0 : -1;
     card.classList.toggle("is-selected", output.name === selectedName);
     card.classList.toggle("is-active", output.active);
 
@@ -147,16 +149,24 @@
       document.dispatchEvent(new CustomEvent("remote-c:audio-routing-update", {
         detail: await response.json(),
       }));
+      window.remoteCNotify?.(
+        path === "force"
+          ? `Audio movido a ${selected.label}.`
+          : `${selected.label} es ahora la salida predeterminada.`,
+        "success",
+      );
       navigator.vibrate?.(20);
     } catch (error) {
       console.error("No se pudo cambiar la salida de audio", error);
       status.textContent = "No se pudo aplicar el cambio · actualizando";
+      window.remoteCNotify?.("No se pudo cambiar la salida de audio.", "error");
 
       try {
         await refreshRouting();
       } catch (refreshError) {
         console.error("No se pudo actualizar la salida de audio", refreshError);
         status.textContent = "Control de salidas no disponible";
+        window.remoteCNotify?.("No se pudo actualizar el control de salidas.", "error");
       }
     } finally {
       setBusy(false);
@@ -205,6 +215,30 @@
 
   setDefaultButton.addEventListener("click", () => sendAction("default"));
   forceButton.addEventListener("click", () => sendAction("force"));
+
+  container.addEventListener("keydown", (event) => {
+    const keys = ["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"];
+    if (!keys.includes(event.key) || state.outputs.length === 0) return;
+
+    event.preventDefault();
+    const current = Math.max(
+      0,
+      state.outputs.findIndex((output) => output.name === selectedName),
+    );
+    let next = current;
+
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = state.outputs.length - 1;
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+      next = (current + 1) % state.outputs.length;
+    }
+    if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      next = (current - 1 + state.outputs.length) % state.outputs.length;
+    }
+
+    selectOutput(state.outputs[next].name);
+    container.querySelector(`[data-output-name="${CSS.escape(selectedName)}"]`)?.focus();
+  });
 
   document.addEventListener("remote-c:audio-routing", (event) => {
     if (busy) {

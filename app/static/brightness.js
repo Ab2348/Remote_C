@@ -43,6 +43,7 @@
 
     const card = container.querySelector(`[data-display-key="${CSS.escape(key)}"]`);
     card?.classList.toggle("is-busy", busy);
+    card?.setAttribute("aria-busy", String(busy));
     card?.querySelectorAll("button, input").forEach((control) => {
       control.disabled = busy;
     });
@@ -86,12 +87,14 @@
     } catch (error) {
       console.error("No se pudo cambiar el brillo del monitor", error);
       status.textContent = "No se pudo aplicar el cambio · actualizando";
+      window.remoteCNotify?.("No se pudo cambiar el brillo del monitor.", "error");
 
       try {
         await refreshState();
       } catch (refreshError) {
         console.error("No se pudo actualizar el brillo", refreshError);
         status.textContent = "Control de brillo no disponible";
+        window.remoteCNotify?.("No se pudo actualizar el control de brillo.", "error");
       }
     } finally {
       setDisplayBusy(key, false);
@@ -160,6 +163,10 @@
       const button = document.createElement("button");
       button.type = "button";
       button.textContent = label;
+      button.setAttribute(
+        "aria-label",
+        `${action === "up" ? "Subir" : "Bajar"} brillo de ${display.label} 10%`,
+      );
       button.addEventListener("click", () => {
         sendDisplayAction(display.key, "control", { action });
       });

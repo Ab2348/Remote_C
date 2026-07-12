@@ -1,4 +1,4 @@
-const CACHE_NAME = "remote-c-v17-output-routing";
+const CACHE_NAME = "remote-c-v18-polish";
 const APP_SHELL = [
   "/",
   "/styles.css",
@@ -7,12 +7,14 @@ const APP_SHELL = [
   "/audio-apps.css",
   "/brightness.css",
   "/output-routing.css",
+  "/feedback.css",
   "/app.js",
   "/volume.js",
   "/now-playing.js",
   "/audio-apps.js",
   "/brightness.js",
   "/output-routing.js",
+  "/feedback.js",
   "/manifest.webmanifest",
   "/icon.svg",
 ];
@@ -44,9 +46,12 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     fetch(event.request)
-      .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+      .then(async (response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(event.request, copy);
+        }
         return response;
       })
       .catch(() => caches.match(event.request)),

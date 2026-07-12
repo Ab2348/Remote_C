@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="/audio-apps.css" />
     <link rel="stylesheet" href="/brightness.css" />
     <link rel="stylesheet" href="/output-routing.css" />
+    <link rel="stylesheet" href="/feedback.css" />
+    <script src="/feedback.js" defer></script>
     <script src="/volume.js" defer></script>
     <script src="/now-playing.js" defer></script>
     <script src="/audio-apps.js" defer></script>
@@ -24,10 +26,11 @@
     <script src="/app.js" defer></script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
     <div class="ambient ambient-top" aria-hidden="true"></div>
     <div class="ambient ambient-bottom" aria-hidden="true"></div>
 
-    <main class="remote">
+    <main id="main-content" class="remote" tabindex="-1">
       <header class="header">
         <div class="brand">
           <div class="brand-mark" aria-hidden="true">
@@ -216,7 +219,7 @@
             </span>
             <div>
               <h2 id="brightness-title">Brillo de monitores</h2>
-              <p id="brightness-status" class="section-status">Cargando monitores</p>
+              <p id="brightness-status" class="section-status" aria-live="polite">Cargando monitores</p>
             </div>
           </div>
         </div>
@@ -224,8 +227,8 @@
         <div class="brightness-global-controls">
           <p class="brightness-global-label">Ambos monitores</p>
           <div class="controls controls-two">
-            <button type="button" data-endpoint="brightness" data-action="down">− 10%</button>
-            <button type="button" data-endpoint="brightness" data-action="up">+ 10%</button>
+            <button type="button" data-endpoint="brightness" data-action="down" aria-label="Bajar brillo de ambos monitores">− 10%</button>
+            <button type="button" data-endpoint="brightness" data-action="up" aria-label="Subir brillo de ambos monitores">+ 10%</button>
           </div>
         </div>
       </section>
@@ -241,7 +244,7 @@
             </span>
             <div>
               <h2 id="default-output-title">Salida predeterminada</h2>
-              <p id="output-routing-status" class="section-status">Cargando salidas</p>
+              <p id="output-routing-status" class="section-status" aria-live="polite">Cargando salidas</p>
             </div>
           </div>
         </div>
@@ -249,11 +252,12 @@
         <div id="audio-outputs" class="output-device-list" role="radiogroup" aria-label="Dispositivo de salida"></div>
 
         <div class="controls controls-two output-routing-actions">
-          <button id="set-default-output" type="button" disabled>Usar como predeterminada</button>
-          <button id="force-output" class="primary-control" type="button" disabled>Mover todo</button>
+          <button id="set-default-output" type="button" aria-describedby="output-routing-hint" disabled>Usar como predeterminada</button>
+          <button id="force-output" class="primary-control" type="button" aria-describedby="output-routing-hint" disabled>Mover todo</button>
         </div>
         <p id="output-routing-hint" class="output-routing-hint">Selecciona una salida para continuar.</p>
       </section>
     </main>
+    <div id="global-feedback" class="global-feedback" role="status" aria-live="polite" aria-atomic="true"></div>
   </body>
 </html>

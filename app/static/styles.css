@@ -36,6 +36,7 @@ body {
   min-height: 100dvh;
   margin: 0;
   overflow-x: hidden;
+  overscroll-behavior-y: contain;
   background:
     radial-gradient(circle at 50% -12rem, rgba(31, 91, 217, 0.16), transparent 34rem),
     linear-gradient(180deg, #050a14 0%, #07101e 52%, #050b16 100%);
@@ -65,11 +66,8 @@ button {
   letter-spacing: -0.01em;
   cursor: pointer;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, opacity 120ms ease;
-}
-
-button:hover {
-  border-color: var(--border-strong);
 }
 
 button:active {
@@ -391,12 +389,18 @@ svg {
   box-shadow: 0 9px 22px rgba(17, 88, 231, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.primary-control:hover {
-  border-color: rgba(126, 166, 255, 0.72);
-}
-
 .primary-control:active {
   background: #164fc3;
+}
+
+@media (hover: hover) {
+  button:hover {
+    border-color: var(--border-strong);
+  }
+
+  .primary-control:hover {
+    border-color: rgba(126, 166, 255, 0.72);
+  }
 }
 
 .media-session-list {

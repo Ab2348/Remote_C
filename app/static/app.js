@@ -35,6 +35,7 @@ function render(state) {
 
 function setMediaSessionsBusy(busy) {
   mediaSessionsBusy = busy;
+  mediaSessions.setAttribute("aria-busy", String(busy));
   mediaSessions
     .querySelectorAll("button")
     .forEach((button) => { button.disabled = busy; });
@@ -191,6 +192,7 @@ function connectEvents() {
   eventSource.addEventListener("server-error", (event) => {
     const error = parseEvent(event, "server-error");
     console.error("El servidor no pudo preparar el estado", error);
+    window.remoteCNotify?.("El servidor no pudo preparar el estado.", "error");
     setConnection(false);
   });
 
@@ -209,15 +211,23 @@ async function requestState() {
   }
 
   stateRequestInFlight = true;
+  let serverReached = false;
 
   try {
     const response = await fetch("/api/state", { cache: "no-store" });
+    serverReached = true;
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     render(await response.json());
     setConnection(true);
   } catch (error) {
     console.error("No se pudo obtener el estado", error);
-    setConnection(false);
+    if (!serverReached) setConnection(false);
+    window.remoteCNotify?.(
+      serverReached
+        ? "Remote C respondió, pero no pudo preparar el estado."
+        : "No se pudo conectar con Remote C.",
+      "error",
+    );
   } finally {
     stateRequestInFlight = false;
   }
@@ -231,6 +241,7 @@ async function requestAudioRouting() {
   } catch (error) {
     console.error("No se pudo obtener el ruteo de audio", error);
     document.dispatchEvent(new CustomEvent("remote-c:audio-routing-error"));
+    window.remoteCNotify?.("No se pudo obtener el estado de audio.", "error");
   }
 }
 
@@ -266,8 +277,11 @@ async function sendMediaSessionAction(player, action) {
 
 async function sendAction(button) {
   const { endpoint, action } = button.dataset;
+  const panel = button.closest(".panel");
   const disabledStates = actionButtons.map((item) => item.disabled);
+  let serverReached = false;
   actionButtons.forEach((item) => { item.disabled = true; });
+  panel?.setAttribute("aria-busy", "true");
 
   try {
     const response = await fetch(`/api/${endpoint}`, {
@@ -275,6 +289,7 @@ async function sendAction(button) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action }),
     });
+    serverReached = true;
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     applyStatePatch(await response.json());
@@ -282,8 +297,10 @@ async function sendAction(button) {
     navigator.vibrate?.(20);
   } catch (error) {
     console.error("No se pudo ejecutar la acción", error);
-    setConnection(false);
+    if (!serverReached) setConnection(false);
+    window.remoteCNotify?.("No se pudo ejecutar la acción.", "error");
   } finally {
+    panel?.setAttribute("aria-busy", "false");
     actionButtons.forEach((item, index) => {
       item.disabled = disabledStates[index];
     });
@@ -313,8 +330,19 @@ if ("EventSource" in window) {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
-      console.error("No se pudo registrar la PWA", error);
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let reloading = false;
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadController || reloading) return;
+      reloading = true;
+      window.location.reload();
     });
+
+    navigator.serviceWorker.register("/sw.js")
+      .then((registration) => registration.update())
+      .catch((error) => {
+        console.error("No se pudo registrar la PWA", error);
+      });
   });
 }

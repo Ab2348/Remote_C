@@ -85,6 +85,7 @@
 
   function setBusy(busy) {
     panel.classList.toggle("is-busy", busy);
+    panel.setAttribute("aria-busy", String(busy));
     volumeButtons.forEach((button) => {
       button.disabled = busy;
     });
@@ -142,6 +143,7 @@
       navigator.vibrate?.(20);
     } catch (error) {
       console.error("No se pudo cambiar el volumen", error);
+      window.remoteCNotify?.("No se pudo cambiar el volumen.", "error");
       restoreLatestVolume();
     } finally {
       requestInFlight = false;
@@ -174,6 +176,7 @@
     activeRequestedVolume = requestedVolume;
     queuedVolume = null;
     panel.classList.add("is-busy");
+    panel.setAttribute("aria-busy", "true");
 
     try {
       const state = await postVolume("set", { volume: requestedVolume });
@@ -181,11 +184,13 @@
       navigator.vibrate?.(20);
     } catch (error) {
       console.error("No se pudo establecer el volumen", error);
+      window.remoteCNotify?.("No se pudo establecer el volumen.", "error");
       restoreLatestVolume();
     } finally {
       requestInFlight = false;
       activeRequestedVolume = null;
       panel.classList.remove("is-busy");
+      panel.setAttribute("aria-busy", "false");
 
       if (queuedVolume !== null) {
         const nextVolume = queuedVolume;

@@ -33,6 +33,7 @@
   function setBusy(value) {
     busy = value;
     container.classList.toggle("is-busy", value);
+    container.setAttribute("aria-busy", String(value));
     container.querySelectorAll("button, select, input").forEach((control) => {
       control.disabled = value;
     });
@@ -113,6 +114,7 @@
     } catch (error) {
       console.error("No se pudo actualizar la aplicación de audio", error);
       status.textContent = "No se pudo aplicar el cambio · actualizando";
+      window.remoteCNotify?.("No se pudo aplicar el cambio de audio.", "error");
 
       try {
         const response = await fetch("/api/audio-routing", { cache: "no-store" });
@@ -123,6 +125,7 @@
       } catch (refreshError) {
         console.error("No se pudo actualizar el ruteo de audio", refreshError);
         status.textContent = "Control de aplicaciones no disponible";
+        window.remoteCNotify?.("No se pudo actualizar el control de aplicaciones.", "error");
       }
     } finally {
       setBusy(false);
@@ -227,6 +230,7 @@
     const move = document.createElement("button");
     move.type = "button";
     move.textContent = "Mover";
+    move.setAttribute("aria-label", `Mover audio de ${application.application}`);
     move.disabled = state.outputs.length === 0 || !select.value;
     select.addEventListener("change", () => {
       move.disabled = busy || !select.value;

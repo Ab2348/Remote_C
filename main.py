@@ -1,11 +1,17 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.api import router
 
 
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "app" / "static"
+
 app = FastAPI(
     title="Remote C",
-    version="0.1.0",
+    version="0.2.0",
     description="Control remoto local para Arch Linux",
 )
 
@@ -18,3 +24,6 @@ def health() -> dict[str, str]:
         "status": "ok",
         "mode": "simulation",
     }
+
+
+app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.services.controller import controller
 from app.services.volume import VolumeControlError
+from app.services.media import MediaControlError
 
 
 router = APIRouter(prefix="/api")
@@ -38,12 +39,11 @@ class MediaRequest(BaseModel):
 class BrightnessRequest(BaseModel):
     action: BrightnessAction
 
-
 @router.get("/state")
 def get_state() -> dict:
     try:
         return controller.get_state()
-    except VolumeControlError as error:
+    except (VolumeControlError, MediaControlError) as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
 
@@ -57,7 +57,10 @@ def control_volume(request: VolumeRequest) -> dict:
 
 @router.post("/media")
 def control_media(request: MediaRequest) -> dict:
-    return controller.control_media(request.action)
+    try:
+        return controller.control_media(request.action)
+    except (VolumeControlError, MediaControlError) as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
 
 
 @router.post("/brightness")

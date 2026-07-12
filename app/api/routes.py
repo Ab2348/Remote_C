@@ -1,10 +1,20 @@
 import asyncio
+import base64
+import binascii
 import json
+import mimetypes
 from enum import StrEnum
+from pathlib import Path
 from typing import Annotated
+from urllib.parse import unquote, urlparse
 
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import (
+    FileResponse,
+    RedirectResponse,
+    Response,
+    StreamingResponse,
+)
 from pydantic import BaseModel, Field
 
 from app.services.audio_routing import AudioRoutingError, audio_routing
@@ -177,6 +187,87 @@ def get_media_sessions() -> dict:
         return controller.get_media_sessions()
     except MediaControlError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.get("/media/artwork")
+async def get_media_artwork(
+    player: Annotated[str, Query(min_length=1, max_length=256)],
+) -> Response:
+    try:
+        artwork_url = await asyncio.to_thread(
+            controller.get_media_artwork,
+            player,
+        )
+    except MediaControlError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+    parsed = urlparse(artwork_url)
+
+    if parsed.scheme in {"http", "https"}:
+        return RedirectResponse(
+            artwork_url,
+            headers={"Cache-Control": "private, max-age=300"},
+        )
+
+    if parsed.scheme == "data":
+        header, separator, encoded = artwork_url.partition(",")
+        media_type = header[5:].split(";", 1)[0]
+
+        if (
+            not separator
+            or ";base64" not in header
+            or not media_type.startswith("image/")
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail="La carátula embebida no es compatible",
+            )
+
+        try:
+            content = base64.b64decode(encoded, validate=True)
+        except (binascii.Error, ValueError) as error:
+            raise HTTPException(
+                status_code=404,
+                detail="La carátula embebida no es válida",
+            ) from error
+
+        if len(content) > 15 * 1024 * 1024:
+            raise HTTPException(
+                status_code=404,
+                detail="La carátula embebida es demasiado grande",
+            )
+
+        return Response(
+            content=content,
+            media_type=media_type,
+            headers={"Cache-Control": "private, max-age=300"},
+        )
+
+    if parsed.scheme != "file" or parsed.netloc not in {"", "localhost"}:
+        raise HTTPException(
+            status_code=404,
+            detail="La carátula usa un formato no compatible",
+        )
+
+    path = Path(unquote(parsed.path)).resolve()
+    media_type, _ = mimetypes.guess_type(path.name)
+
+    if (
+        not path.is_file()
+        or not media_type
+        or not media_type.startswith("image/")
+        or path.stat().st_size > 15 * 1024 * 1024
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="La carátula local no está disponible",
+        )
+
+    return FileResponse(
+        path,
+        media_type=media_type,
+        headers={"Cache-Control": "private, max-age=300"},
+    )
 
 
 @router.post("/media/sessions/control")

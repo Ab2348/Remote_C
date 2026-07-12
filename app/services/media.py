@@ -1,3 +1,4 @@
+import hashlib
 import subprocess
 from dataclasses import dataclass
 
@@ -13,6 +14,7 @@ class PlayerState:
     status: str
     title: str
     artist: str
+    art_url: str
     duration_us: int
     can_play: bool
     can_pause: bool
@@ -36,6 +38,8 @@ class PlayerctlMediaService:
             "{{xesam:title}}",
             "{{xesam:artist}}",
             "{{mpris:length}}",
+            "{{mpris:artUrl}}",
+            "remote-c-end",
         )
     )
 
@@ -84,6 +88,11 @@ class PlayerctlMediaService:
                 "title": player.title,
                 "artist": player.artist,
                 "current_track": player.current_track,
+                "artwork_id": (
+                    hashlib.sha256(player.art_url.encode()).hexdigest()[:12]
+                    if player.art_url
+                    else None
+                ),
                 "duration_seconds": round(player.duration_us / 1_000_000),
                 "can_play_pause": (
                     player.can_pause
@@ -121,9 +130,7 @@ class PlayerctlMediaService:
         available_players = self._list_player_names()
 
         if player_name not in available_players:
-            raise MediaControlError(
-                "El reproductor seleccionado ya no está disponible"
-            )
+            raise MediaControlError("El reproductor seleccionado ya no está disponible")
 
         command = self.SESSION_COMMANDS.get(str(action))
 
@@ -132,6 +139,23 @@ class PlayerctlMediaService:
 
         self._run("--player", player_name, *command)
         return self.get_sessions()
+
+    def get_artwork_url(self, player_name: str) -> str:
+        if player_name not in self._list_player_names():
+            raise MediaControlError("El reproductor seleccionado ya no está disponible")
+
+        artwork_url = self._run(
+            "--player",
+            player_name,
+            "metadata",
+            "mpris:artUrl",
+            allow_empty=True,
+        )
+
+        if not artwork_url:
+            raise MediaControlError("El reproductor no ofrece una carátula")
+
+        return artwork_url
 
     def _get_active_player(self) -> PlayerState | None:
         return self._select_active_player(self._get_players())
@@ -144,11 +168,7 @@ class PlayerctlMediaService:
             return None
 
         return next(
-            (
-                player
-                for player in players
-                if player.status.casefold() == "playing"
-            ),
+            (player for player in players if player.status.casefold() == "playing"),
             players[0],
         )
 
@@ -165,11 +185,9 @@ class PlayerctlMediaService:
 
     def _list_player_names(self) -> list[str]:
         output = self._run("--list-all", allow_empty=True)
-        return list(dict.fromkeys(
-            name.strip()
-            for name in output.splitlines()
-            if name.strip()
-        ))
+        return list(
+            dict.fromkeys(name.strip() for name in output.splitlines() if name.strip())
+        )
 
     def _read_player(self, name: str) -> PlayerState | None:
         output = self._run(
@@ -181,9 +199,9 @@ class PlayerctlMediaService:
             allow_empty=True,
         )
 
-        fields = output.split(self.SEPARATOR, maxsplit=3)
+        fields = output.split(self.SEPARATOR, maxsplit=5)
 
-        if len(fields) != 4:
+        if len(fields) != 6:
             status = self._run(
                 "--player",
                 name,
@@ -194,7 +212,7 @@ class PlayerctlMediaService:
             if not status:
                 return None
 
-            fields = [status, "", "", "0"]
+            fields = [status, "", "", "0", "", "remote-c-end"]
 
         try:
             duration_us = int(float(fields[3] or 0))
@@ -211,6 +229,7 @@ class PlayerctlMediaService:
             status=fields[0] or "Stopped",
             title=fields[1],
             artist=fields[2],
+            art_url=fields[4],
             duration_us=max(0, duration_us),
             can_play=capabilities["CanPlay"],
             can_pause=capabilities["CanPause"],
@@ -280,9 +299,7 @@ class PlayerctlMediaService:
         except FileNotFoundError as error:
             raise MediaControlError("playerctl no está disponible") from error
         except subprocess.TimeoutExpired as error:
-            raise MediaControlError(
-                "playerctl tardó demasiado en responder"
-            ) from error
+            raise MediaControlError("playerctl tardó demasiado en responder") from error
 
         if result.returncode != 0:
             if allow_empty:

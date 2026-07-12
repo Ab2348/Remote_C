@@ -61,5 +61,8 @@ class RemoteController:
     ) -> dict:
         return self._media.control_session(player_name, action)
 
+    def get_media_artwork(self, player_name: str) -> str:
+        return self._media.get_artwork_url(player_name)
+
 
 controller = RemoteController()

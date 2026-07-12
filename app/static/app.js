@@ -1,15 +1,5 @@
 const connection = document.querySelector("#connection");
-const mediaSessionsStatus = document.querySelector("#media-sessions-status");
-const mediaSessions = document.querySelector("#media-sessions");
 const actionButtons = [...document.querySelectorAll("button[data-endpoint]")];
-
-const playbackLabels = {
-  playing: "Reproduciendo",
-  paused: "Pausado",
-  stopped: "Detenido",
-};
-
-let mediaSessionsBusy = false;
 let stateRequestInFlight = false;
 let systemState = null;
 let eventSource = null;
@@ -22,113 +12,9 @@ function setConnection(online) {
 function render(state) {
   systemState = state;
 
-  if (!mediaSessionsBusy) {
-    renderMediaSessions(
-      Array.isArray(state.media_sessions) ? state.media_sessions : [],
-    );
-  }
-
   document.dispatchEvent(new CustomEvent("remote-c:state", {
     detail: state,
   }));
-}
-
-function setMediaSessionsBusy(busy) {
-  mediaSessionsBusy = busy;
-  mediaSessions.setAttribute("aria-busy", String(busy));
-  mediaSessions
-    .querySelectorAll("button")
-    .forEach((button) => { button.disabled = busy; });
-}
-
-function renderMediaSession(player) {
-  const item = document.createElement("article");
-  item.className = "media-session";
-
-  const heading = document.createElement("div");
-  heading.className = "media-session-heading";
-
-  const content = document.createElement("div");
-  const title = document.createElement("h3");
-  title.textContent = player.label;
-
-  const track = document.createElement("p");
-  track.textContent = player.current_track || "Sin reproducción";
-  content.append(title, track);
-
-  const status = document.createElement("span");
-  status.className = "media-session-status";
-  status.textContent =
-    playbackLabels[player.status] ?? "Detenido";
-
-  heading.append(content, status);
-
-  const controls = document.createElement("div");
-  controls.className = "media-session-controls";
-
-  const actions = [];
-
-  if (player.can_previous) {
-    actions.push(["previous", "Anterior"]);
-  }
-
-  if (player.can_seek) {
-    actions.push(["seek_backward", "−10 s"]);
-  }
-
-  if (player.can_play_pause) {
-    actions.push([
-      "play_pause",
-      player.playing ? "Pausar" : "Reproducir",
-    ]);
-  }
-
-  if (player.can_seek) {
-    actions.push(["seek_forward", "+10 s"]);
-  }
-
-  if (player.can_next) {
-    actions.push(["next", "Siguiente"]);
-  }
-
-  actions.forEach(([action, label]) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = label;
-    button.addEventListener("click", () => {
-      sendMediaSessionAction(player.name, action);
-    });
-    controls.append(button);
-  });
-
-  item.append(heading);
-
-  if (actions.length > 0) {
-    item.append(controls);
-  }
-
-  return item;
-}
-
-function renderMediaSessions(players) {
-  mediaSessions.replaceChildren();
-
-  if (players.length === 0) {
-    mediaSessionsStatus.textContent = "Sin reproductores disponibles";
-    const empty = document.createElement("p");
-    empty.className = "empty";
-    empty.textContent = "No hay sesiones multimedia activas.";
-    mediaSessions.append(empty);
-  } else {
-    mediaSessionsStatus.textContent =
-      `${players.length} ${players.length === 1 ? "sesión" : "sesiones"} activas`;
-
-    players.forEach((player) => {
-      mediaSessions.append(renderMediaSession(player));
-    });
-  }
-
-  setMediaSessionsBusy(false);
 }
 
 function renderAudioRouting(state) {
@@ -242,36 +128,6 @@ async function requestAudioRouting() {
     console.error("No se pudo obtener el ruteo de audio", error);
     document.dispatchEvent(new CustomEvent("remote-c:audio-routing-error"));
     window.remoteCNotify?.("No se pudo obtener el estado de audio.", "error");
-  }
-}
-
-async function sendMediaSessionAction(player, action) {
-  setMediaSessionsBusy(true);
-
-  try {
-    const response = await fetch("/api/media/sessions/control", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player, action }),
-    });
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const state = await response.json();
-    mediaSessionsBusy = false;
-    renderMediaSessions(
-      Array.isArray(state.players) ? state.players : [],
-    );
-    navigator.vibrate?.(20);
-  } catch (error) {
-    console.warn(
-      "La capacidad del reproductor cambió; actualizando estado",
-      error,
-    );
-    mediaSessionsBusy = false;
-    await requestState();
-  } finally {
-    setMediaSessionsBusy(false);
   }
 }
 

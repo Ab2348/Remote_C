@@ -27,6 +27,7 @@ class AudioStream:
     pid: str
     volume: int
     muted: bool
+    corked: bool
 
 
 class PactlAudioRoutingService:
@@ -73,6 +74,7 @@ class PactlAudioRoutingService:
                 else None
             )
             muted_count = sum(stream.muted for stream in group)
+            playing = any(not stream.corked for stream in group)
             media_names = list(
                 dict.fromkeys(stream.media for stream in group if stream.media)
             )
@@ -94,6 +96,8 @@ class PactlAudioRoutingService:
                     "mixed_volume": len({stream.volume for stream in group}) > 1,
                     "muted": muted_count == len(group),
                     "partially_muted": 0 < muted_count < len(group),
+                    "playing": playing,
+                    "playback_status": "playing" if playing else "paused",
                     "output_name": output.name if output else None,
                     "output_label": (
                         output.label
@@ -316,6 +320,7 @@ class PactlAudioRoutingService:
                     pid=str(properties.get("application.process.id") or ""),
                     volume=volume,
                     muted=bool(item.get("mute", False)),
+                    corked=bool(item.get("corked", False)),
                 )
             )
 

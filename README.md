@@ -5,8 +5,9 @@ Control remoto local para Arch Linux, accesible desde la red privada de Tailscal
 ## Funciones
 
 - Volumen general, silencio y reproducción multimedia.
-- Control independiente de sesiones y aplicaciones con audio.
-- Volumen, silencio y salida por aplicación.
+- Aplicaciones con audio unificadas con sus sesiones multimedia.
+- Reproducción, seek, volumen, silencio y salida por aplicación.
+- Carátula de la pista activa mediante metadata MPRIS.
 - Brillo conjunto o independiente para los dos monitores DDC/CI.
 - Selección de salida predeterminada y movimiento de todos los flujos activos.
 - Interfaz PWA móvil con estado actualizado mediante eventos.

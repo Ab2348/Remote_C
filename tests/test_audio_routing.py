@@ -19,6 +19,7 @@ def stream(
     media: str = "Playback",
     volume: int = 50,
     muted: bool = False,
+    corked: bool = False,
 ) -> AudioStream:
     return AudioStream(
         index=index,
@@ -29,6 +30,7 @@ def stream(
         pid=pid,
         volume=volume,
         muted=muted,
+        corked=corked,
     )
 
 
@@ -59,6 +61,17 @@ class AudioApplicationSerializationTests(unittest.TestCase):
         self.assertTrue(application["partially_muted"])
         self.assertEqual(application["output_name"], "razer")
         self.assertEqual(application["media"], ["YouTube", "Spotify web"])
+        self.assertTrue(application["playing"])
+        self.assertEqual(application["playback_status"], "playing")
+
+    def test_marks_a_fully_corked_application_as_paused(self) -> None:
+        applications = PactlAudioRoutingService._serialize_applications(
+            [stream(1, corked=True), stream(2, corked=True)],
+            self.sinks,
+        )
+
+        self.assertFalse(applications[0]["playing"])
+        self.assertEqual(applications[0]["playback_status"], "paused")
 
     def test_marks_an_application_routed_to_multiple_outputs(self) -> None:
         applications = PactlAudioRoutingService._serialize_applications(

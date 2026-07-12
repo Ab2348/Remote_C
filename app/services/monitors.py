@@ -139,7 +139,7 @@ class SystemEventMonitors:
             "--follow",
             "metadata",
             "--format",
-            "{{playerName}}|{{status}}|{{xesam:title}}|{{xesam:artist}}",
+            "{{playerName}}|{{status}}|{{xesam:title}}|{{xesam:artist}}|{{mpris:artUrl}}",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL,
         )

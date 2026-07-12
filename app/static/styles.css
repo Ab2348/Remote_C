@@ -399,18 +399,6 @@ svg {
   background: #164fc3;
 }
 
-.field {
-  display: grid;
-  gap: 0.42rem;
-  margin-top: 0.85rem;
-}
-
-.field > span {
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
 .media-session-list {
   display: grid;
   gap: 0.62rem;
@@ -480,10 +468,6 @@ svg {
   min-height: 2.7rem;
   padding-inline: 0.55rem;
   font-size: 0.78rem;
-}
-
-.output-actions .primary-control {
-  box-shadow: 0 8px 18px rgba(17, 88, 231, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 @media (min-width: 42rem) {

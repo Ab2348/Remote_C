@@ -15,10 +15,12 @@
     <link rel="stylesheet" href="/now-playing.css" />
     <link rel="stylesheet" href="/audio-apps.css" />
     <link rel="stylesheet" href="/brightness.css" />
+    <link rel="stylesheet" href="/output-routing.css" />
     <script src="/volume.js" defer></script>
     <script src="/now-playing.js" defer></script>
     <script src="/audio-apps.js" defer></script>
     <script src="/brightness.js" defer></script>
+    <script src="/output-routing.js" defer></script>
     <script src="/app.js" defer></script>
   </head>
   <body>
@@ -237,19 +239,20 @@
                 <path d="M17 9l3 3-3 3M20 12h-6" />
               </svg>
             </span>
-            <h2 id="default-output-title">Salida predeterminada</h2>
+            <div>
+              <h2 id="default-output-title">Salida predeterminada</h2>
+              <p id="output-routing-status" class="section-status">Cargando salidas</p>
+            </div>
           </div>
         </div>
 
-        <label class="field">
-          <span>Dispositivo de salida</span>
-          <select id="audio-output" disabled></select>
-        </label>
+        <div id="audio-outputs" class="output-device-list" role="radiogroup" aria-label="Dispositivo de salida"></div>
 
-        <div class="controls controls-two output-actions">
-          <button id="set-default-output" type="button" disabled>Usar salida</button>
+        <div class="controls controls-two output-routing-actions">
+          <button id="set-default-output" type="button" disabled>Usar como predeterminada</button>
           <button id="force-output" class="primary-control" type="button" disabled>Mover todo</button>
         </div>
+        <p id="output-routing-hint" class="output-routing-hint">Selecciona una salida para continuar.</p>
       </section>
     </main>
   </body>

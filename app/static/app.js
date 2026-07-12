@@ -2,10 +2,6 @@ const connection = document.querySelector("#connection");
 const mediaSessionsStatus = document.querySelector("#media-sessions-status");
 const mediaSessions = document.querySelector("#media-sessions");
 const actionButtons = [...document.querySelectorAll("button[data-endpoint]")];
-const audioOutput = document.querySelector("#audio-output");
-const setDefaultOutputButton = document.querySelector("#set-default-output");
-const forceOutputButton = document.querySelector("#force-output");
-const audioRoutingButtons = [setDefaultOutputButton, forceOutputButton];
 
 const playbackLabels = {
   playing: "Reproduciendo",
@@ -13,17 +9,10 @@ const playbackLabels = {
   stopped: "Detenido",
 };
 
-let audioRoutingState = {
-  outputs: [],
-  applications: [],
-};
-
-let audioRoutingBusy = false;
 let mediaSessionsBusy = false;
 let stateRequestInFlight = false;
 let systemState = null;
 let eventSource = null;
-let pendingAudioRoutingState = null;
 
 function setConnection(online) {
   connection.textContent = online ? "Conectado" : "Sin conexión";
@@ -141,61 +130,11 @@ function renderMediaSessions(players) {
   setMediaSessionsBusy(false);
 }
 
-function setAudioRoutingBusy(busy) {
-  audioRoutingBusy = busy;
-  const disabled = busy || audioRoutingState.outputs.length === 0;
-
-  audioOutput.disabled = disabled;
-  audioRoutingButtons.forEach((button) => { button.disabled = disabled; });
-
-  applyPendingAudioRouting();
-}
-
-function applyPendingAudioRouting() {
-  if (
-    audioRoutingBusy
-    || pendingAudioRoutingState === null
-  ) {
-    return;
-  }
-
-  const state = pendingAudioRoutingState;
-  pendingAudioRoutingState = null;
-  renderAudioRouting(state);
-}
-
-function renderOutputOptions(selectedName) {
-  audioOutput.replaceChildren();
-
-  audioRoutingState.outputs.forEach((output) => {
-    const option = document.createElement("option");
-    option.value = output.name;
-    option.textContent = output.active ? `${output.label} (activa)` : output.label;
-    audioOutput.append(option);
-  });
-
-  const names = audioRoutingState.outputs.map((output) => output.name);
-  const activeOutput = audioRoutingState.outputs.find((output) => output.active);
-
-  if (selectedName && names.includes(selectedName)) {
-    audioOutput.value = selectedName;
-  } else if (activeOutput) {
-    audioOutput.value = activeOutput.name;
-  }
-}
-
 function renderAudioRouting(state) {
-  const selectedName = audioOutput.value;
-
-  audioRoutingState = state;
-  renderOutputOptions(selectedName);
   document.dispatchEvent(new CustomEvent("remote-c:audio-routing", {
     detail: state,
   }));
-
-  setAudioRoutingBusy(false);
 }
-
 
 function applyStatePatch(patch) {
   if (systemState === null) {
@@ -225,11 +164,7 @@ function connectEvents() {
 
     render(snapshot.state);
 
-    if (audioRoutingBusy) {
-      pendingAudioRoutingState = snapshot.audio_routing;
-    } else {
-      renderAudioRouting(snapshot.audio_routing);
-    }
+    renderAudioRouting(snapshot.audio_routing);
 
     setConnection(true);
   });
@@ -248,11 +183,7 @@ function connectEvents() {
     const state = parseEvent(event, "audio-routing");
     if (state === null) return;
 
-    if (audioRoutingBusy) {
-      pendingAudioRoutingState = state;
-    } else {
-      renderAudioRouting(state);
-    }
+    renderAudioRouting(state);
 
     setConnection(true);
   });
@@ -293,19 +224,13 @@ async function requestState() {
 }
 
 async function requestAudioRouting() {
-  if (audioRoutingBusy) {
-    return;
-  }
-
   try {
     const response = await fetch("/api/audio-routing", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     renderAudioRouting(await response.json());
   } catch (error) {
     console.error("No se pudo obtener el ruteo de audio", error);
-    audioRoutingState = { outputs: [], applications: [] };
     document.dispatchEvent(new CustomEvent("remote-c:audio-routing-error"));
-    setAudioRoutingBusy(false);
   }
 }
 
@@ -365,43 +290,8 @@ async function sendAction(button) {
   }
 }
 
-async function sendAudioRoutingAction(path, body) {
-  setAudioRoutingBusy(true);
-
-  try {
-    const response = await fetch(`/api/audio-routing/${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    renderAudioRouting(await response.json());
-    navigator.vibrate?.(20);
-  } catch (error) {
-    console.error("No se pudo cambiar el ruteo de audio", error);
-    document.dispatchEvent(new CustomEvent("remote-c:audio-routing-error"));
-    setAudioRoutingBusy(false);
-    await requestAudioRouting();
-  } finally {
-    setAudioRoutingBusy(false);
-  }
-}
-
-function selectedAudioOutput() {
-  return audioOutput.value;
-}
-
 actionButtons.forEach((button) => {
   button.addEventListener("click", () => sendAction(button));
-});
-
-setDefaultOutputButton.addEventListener("click", () => {
-  sendAudioRoutingAction("default", { name: selectedAudioOutput() });
-});
-
-forceOutputButton.addEventListener("click", () => {
-  sendAudioRoutingAction("force", { name: selectedAudioOutput() });
 });
 
 document.addEventListener("remote-c:audio-routing-update", (event) => {

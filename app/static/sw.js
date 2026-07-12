@@ -1,4 +1,4 @@
-const CACHE_NAME = "remote-c-v16-brightness";
+const CACHE_NAME = "remote-c-v17-output-routing";
 const APP_SHELL = [
   "/",
   "/styles.css",
@@ -6,11 +6,13 @@ const APP_SHELL = [
   "/now-playing.css",
   "/audio-apps.css",
   "/brightness.css",
+  "/output-routing.css",
   "/app.js",
   "/volume.js",
   "/now-playing.js",
   "/audio-apps.js",
   "/brightness.js",
+  "/output-routing.js",
   "/manifest.webmanifest",
   "/icon.svg",
 ];

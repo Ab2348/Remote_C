@@ -43,37 +43,46 @@ class PlayerctlMediaService:
     }
 
     def get_state(self) -> dict:
-        player = self._get_active_player()
+        players = self._get_players()
+        player = self._select_active_player(players)
 
         if player is None:
             return {
                 "playing": False,
                 "playback_status": "stopped",
                 "current_track": "Sin reproducción",
+                "media_sessions": [],
             }
 
         return {
             "playing": player.status.casefold() == "playing",
             "playback_status": player.status.casefold(),
             "current_track": player.current_track,
+            "media_sessions": self._serialize_players(players),
         }
 
     def get_sessions(self) -> dict:
         return {
-            "players": [
-                {
-                    "name": player.name,
-                    "label": player.label,
-                    "status": player.status.casefold(),
-                    "playing": player.status.casefold() == "playing",
-                    "title": player.title,
-                    "artist": player.artist,
-                    "current_track": player.current_track,
-                    "duration_seconds": round(player.duration_us / 1_000_000),
-                }
-                for player in self._get_players()
-            ]
+            "players": self._serialize_players(self._get_players()),
         }
+
+    @staticmethod
+    def _serialize_players(
+        players: list[PlayerState],
+    ) -> list[dict]:
+        return [
+            {
+                "name": player.name,
+                "label": player.label,
+                "status": player.status.casefold(),
+                "playing": player.status.casefold() == "playing",
+                "title": player.title,
+                "artist": player.artist,
+                "current_track": player.current_track,
+                "duration_seconds": round(player.duration_us / 1_000_000),
+            }
+            for player in players
+        ]
 
     def control(self, action: str) -> dict:
         player = self._get_active_player()
@@ -112,8 +121,12 @@ class PlayerctlMediaService:
         return self.get_sessions()
 
     def _get_active_player(self) -> PlayerState | None:
-        players = self._get_players()
+        return self._select_active_player(self._get_players())
 
+    @staticmethod
+    def _select_active_player(
+        players: list[PlayerState],
+    ) -> PlayerState | None:
         if not players:
             return None
 

@@ -18,6 +18,7 @@ class ApplicationIconServiceTests(unittest.TestCase):
             service = ApplicationIconService(
                 icon_roots=(root,),
                 pixmap_roots=(Path(directory) / "pixmaps",),
+                custom_roots=(),
             )
 
             path, media_type = service.resolve("brave")
@@ -37,10 +38,29 @@ class ApplicationIconServiceTests(unittest.TestCase):
             service = ApplicationIconService(
                 icon_roots=(root,),
                 pixmap_roots=(root,),
+                custom_roots=(),
             )
 
             with self.assertRaisesRegex(ApplicationIconError, "No hay un icono"):
                 service.resolve("unknown-player")
+
+    def test_uses_a_packaged_icon_when_the_system_has_none(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            custom = root / "custom"
+            icon = custom / "brave.svg"
+            custom.mkdir()
+            icon.write_text("<svg xmlns='http://www.w3.org/2000/svg'/>")
+            service = ApplicationIconService(
+                icon_roots=(),
+                pixmap_roots=(),
+                custom_roots=(custom,),
+            )
+
+            path, media_type = service.resolve("brave-browser")
+
+            self.assertEqual(path, icon.resolve())
+            self.assertEqual(media_type, "image/svg+xml")
 
 
 if __name__ == "__main__":

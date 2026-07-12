@@ -38,19 +38,23 @@ class ApplicationIconService:
         self,
         icon_roots: tuple[Path, ...] | None = None,
         pixmap_roots: tuple[Path, ...] | None = None,
+        custom_roots: tuple[Path, ...] | None = None,
     ) -> None:
         data_home = Path(
             os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")
         )
-        self.icon_roots = icon_roots or (
+        self.icon_roots = icon_roots if icon_roots is not None else (
             data_home / "icons/hicolor",
             data_home / "flatpak/exports/share/icons/hicolor",
             Path("/usr/share/icons/hicolor"),
             Path("/var/lib/flatpak/exports/share/icons/hicolor"),
         )
-        self.pixmap_roots = pixmap_roots or (
+        self.pixmap_roots = pixmap_roots if pixmap_roots is not None else (
             data_home / "pixmaps",
             Path("/usr/share/pixmaps"),
+        )
+        self.custom_roots = custom_roots if custom_roots is not None else (
+            Path(__file__).resolve().parents[1] / "static/application-icons",
         )
 
     @lru_cache(maxsize=128)
@@ -83,6 +87,11 @@ class ApplicationIconService:
                         yield root / size / "apps" / f"{name}.{extension}"
 
         for root in self.pixmap_roots:
+            for name in names:
+                for extension in self.EXTENSIONS:
+                    yield root / f"{name}.{extension}"
+
+        for root in self.custom_roots:
             for name in names:
                 for extension in self.EXTENSIONS:
                     yield root / f"{name}.{extension}"

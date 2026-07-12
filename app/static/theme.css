@@ -1,0 +1,64 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  background: #050b16;
+  color: #f7f9fc;
+
+  /* Palette */
+  --background: #050b16;
+  --surface: rgba(15, 24, 40, 0.88);
+  --surface-strong: #101a2b;
+  --surface-soft: rgba(21, 32, 51, 0.78);
+  --surface-pressed: #1c2a42;
+  --text: #f7f9fc;
+  --muted: #98a6bc;
+  --muted-strong: #c5cfde;
+  --accent: #2475ff;
+  --accent-strong: #1158e7;
+  --accent-pressed: #164fc3;
+  --success: #28d46f;
+  --danger: #ff8f9a;
+
+  /* Wallpaper */
+  --body-background:
+    radial-gradient(circle at 50% -12rem, rgba(31, 91, 217, 0.16), transparent 34rem),
+    linear-gradient(180deg, #050a14 0%, #07101e 52%, #050b16 100%);
+  --wallpaper-scrim:
+    radial-gradient(circle at 50% -8rem, rgba(24, 79, 183, 0.12), transparent 32rem),
+    linear-gradient(180deg, rgba(3, 8, 16, 0.5), rgba(3, 8, 16, 0.7) 58%, rgba(3, 8, 16, 0.8));
+  --ambient-top: #1c67ff;
+  --ambient-bottom: #174caa;
+  --ambient-opacity: 0.14;
+
+  /* Glass */
+  --glass-panel: linear-gradient(145deg, rgba(16, 27, 45, 0.64), rgba(7, 14, 27, 0.52));
+  --glass-card: linear-gradient(145deg, rgba(18, 30, 49, 0.62), rgba(8, 16, 29, 0.54));
+  --glass-fallback: linear-gradient(150deg, rgba(18, 29, 47, 0.96), rgba(11, 19, 33, 0.94));
+  --glass-border: rgba(184, 207, 242, 0.17);
+  --glass-reflection:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.07), transparent 30%),
+    radial-gradient(circle at 88% 4%, rgba(100, 151, 255, 0.07), transparent 32%);
+  --glass-blur: 22px;
+  --glass-saturation: 135%;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  --glass-shadow:
+    0 20px 52px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.085),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+
+  /* Borders and controls */
+  --border: rgba(130, 154, 192, 0.16);
+  --border-strong: rgba(130, 154, 192, 0.26);
+  --control-background: linear-gradient(180deg, rgba(31, 45, 68, 0.96), rgba(22, 33, 52, 0.96));
+  --segmented-background: linear-gradient(180deg, rgba(29, 42, 63, 0.74), rgba(14, 24, 40, 0.7));
+  --focus-ring: rgba(36, 117, 255, 0.34);
+
+  /* Brand and connection state */
+  --brand-background: linear-gradient(145deg, #2878ff, #0f4fda);
+  --section-icon: #5c96ff;
+  --status-offline-border: rgba(255, 143, 154, 0.22);
+  --status-offline-background: rgba(92, 27, 38, 0.38);
+  --status-offline-text: #ffc3c9;
+  --status-online-border: rgba(40, 212, 111, 0.24);
+  --status-online-background: rgba(12, 81, 46, 0.34);
+}

@@ -1,7 +1,11 @@
-const CACHE_NAME = "remote-c-v21-live-wallpaper-glass";
+const CACHE_NAME = "remote-c-v22-modular-css";
 const APP_SHELL = [
   "/",
-  "/styles.css",
+  "/theme.css",
+  "/foundation.css",
+  "/shell.css",
+  "/controls.css",
+  "/panels.css",
   "/volume.css",
   "/now-playing.css",
   "/audio-apps.css",

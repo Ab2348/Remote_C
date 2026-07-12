@@ -21,7 +21,7 @@ DDC/CI no ofrece una fuente de eventos. Mientras haya al menos un cliente conect
 
 ## Interfaz
 
-El frontend usa JavaScript y CSS nativos. Cada control principal vive en un componente independiente dentro de `app/static/`: `volume`, `now-playing`, `audio-apps`, `brightness` y `output-routing`. `app.js` conserva la conexión SSE, distribuye estados y coordina únicamente las acciones generales.
+El frontend usa JavaScript y CSS nativos. El CSS compartido está dividido por responsabilidad en `theme`, `foundation`, `shell`, `controls` y `panels`; `theme.css` concentra la paleta y todos los parámetros ajustables del efecto glass. Cada control principal conserva su componente independiente: `volume`, `now-playing`, `audio-apps`, `brightness` y `output-routing`. `app.js` mantiene la conexión SSE, distribuye estados y coordina únicamente las acciones generales.
 
 Los componentes no realizan sondeo mientras `EventSource` está disponible. Los cambios de wallpaper se detectan observando los enlaces `wall.set` y `wall.thmb` de la caché de HyDE; por SSE solo viaja la revisión y la miniatura se descarga desde un endpoint versionado. Si el navegador no soporta SSE, `app.js` activa la actualización periódica de respaldo.
 

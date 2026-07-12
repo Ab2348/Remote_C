@@ -8,6 +8,23 @@ const dom = new JSDOM(html, {
 });
 const { window } = dom;
 
+const sharedStyles = [...window.document.querySelectorAll('link[rel="stylesheet"]')]
+  .slice(0, 5)
+  .map((link) => new URL(link.href).pathname);
+const expectedSharedStyles = [
+  "/theme.css",
+  "/foundation.css",
+  "/shell.css",
+  "/controls.css",
+  "/panels.css",
+];
+if (JSON.stringify(sharedStyles) !== JSON.stringify(expectedSharedStyles)) {
+  throw new Error("orden de responsabilidades CSS incorrecto");
+}
+if (window.document.querySelector('link[href="/styles.css"]')) {
+  throw new Error("la hoja CSS monolítica todavía está enlazada");
+}
+
 class EventSourceStub {
   constructor() {
     this.listeners = new Map();

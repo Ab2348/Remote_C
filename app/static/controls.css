@@ -1,0 +1,135 @@
+button,
+select,
+input {
+  font: inherit;
+}
+
+button,
+select {
+  min-height: 2.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  color: inherit;
+}
+
+button {
+  padding: 0.68rem 0.85rem;
+  background: var(--control-background);
+  font-weight: 680;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+}
+
+button:active {
+  transform: scale(0.985);
+  background: var(--surface-pressed);
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+button:disabled,
+select:disabled,
+input:disabled {
+  cursor: wait;
+  opacity: 0.52;
+}
+
+select {
+  width: 100%;
+  padding: 0.7rem 2.55rem 0.7rem 0.9rem;
+  appearance: none;
+  background-color: var(--surface-strong);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-strong) 50%),
+    linear-gradient(135deg, var(--muted-strong) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.15rem) calc(50% - 0.12rem),
+    calc(100% - 0.82rem) calc(50% - 0.12rem);
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+  font-weight: 620;
+}
+
+input[type="range"] {
+  width: 100%;
+  min-height: 2.75rem;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.controls {
+  display: grid;
+  gap: 0.58rem;
+  margin-top: 0.8rem;
+}
+
+.controls-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.controls-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.segmented-controls {
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--border);
+}
+
+.segmented-controls button {
+  min-height: 3rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--segmented-background);
+}
+
+.segmented-controls button:first-child {
+  font-size: 1.35rem;
+}
+
+.segmented-controls button:last-child {
+  font-size: 1.25rem;
+}
+
+.primary-control {
+  border-color: rgba(71, 130, 255, 0.5);
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  box-shadow: 0 9px 22px rgba(17, 88, 231, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.primary-control:active {
+  background: var(--accent-pressed);
+}
+
+@media (hover: hover) {
+  button:hover {
+    border-color: var(--border-strong);
+  }
+
+  .primary-control:hover {
+    border-color: rgba(126, 166, 255, 0.72);
+  }
+}
+
+@media (max-width: 27rem) {
+  .controls-three {
+    grid-template-columns: 0.8fr 1.4fr 0.8fr;
+  }
+
+  .media-controls button {
+    padding-inline: 0.38rem;
+    font-size: 0.78rem;
+  }
+}

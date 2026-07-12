@@ -1,6 +1,6 @@
 .now-playing-panel {
   background:
-    radial-gradient(circle at 92% 6%, rgba(45, 105, 231, 0.16), transparent 12rem),
+    radial-gradient(circle at 92% 6%, var(--panel-accent-glow), transparent 12rem),
     var(--glass-panel);
 }
 

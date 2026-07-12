@@ -1,4 +1,4 @@
-const CACHE_NAME = "remote-c-v22-modular-css";
+const CACHE_NAME = "remote-c-v23-neutral-glass";
 const APP_SHELL = [
   "/",
   "/theme.css",

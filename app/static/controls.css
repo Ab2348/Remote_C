@@ -8,7 +8,7 @@ button,
 select {
   min-height: 2.9rem;
   border: 1px solid var(--border);
-  border-radius: 0.8rem;
+  border-radius: 0.95rem;
   color: inherit;
 }
 

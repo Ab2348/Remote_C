@@ -10,7 +10,7 @@
   padding: clamp(0.88rem, 3.7vw, 1.05rem);
   overflow: hidden;
   border: 1px solid var(--glass-border);
-  border-radius: 1rem;
+  border-radius: 1.35rem;
   background: var(--glass-panel);
   box-shadow: var(--glass-shadow);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
@@ -90,6 +90,6 @@
 
 @media (min-width: 42rem) {
   .panel {
-    border-radius: 1.12rem;
+    border-radius: 1.45rem;
   }
 }

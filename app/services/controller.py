@@ -1,6 +1,7 @@
 from app.services.media import PlayerctlMediaService
 from app.services.simulated import controller as simulated_controller
 from app.services.volume import WpctlVolumeService
+from app.services.brightness import DdcutilBrightnessService
 
 
 class RemoteController:
@@ -8,16 +9,23 @@ class RemoteController:
         self._simulated = simulated_controller
         self._volume = WpctlVolumeService()
         self._media = PlayerctlMediaService()
+        self._brightness = DdcutilBrightnessService()
 
     def _compose_state(
         self,
         *,
         volume: dict | None = None,
         media: dict | None = None,
+        brightness: dict | None = None,
     ) -> dict:
         state = self._simulated.get_state()
         state.update(volume if volume is not None else self._volume.get_state())
         state.update(media if media is not None else self._media.get_state())
+        state.update(
+            brightness
+            if brightness is not None
+            else self._brightness.get_state()
+        )
         return state
 
     def get_state(self) -> dict:
@@ -32,8 +40,8 @@ class RemoteController:
         return self._compose_state(media=media)
 
     def change_brightness(self, action: str) -> dict:
-        self._simulated.change_brightness(action)
-        return self._compose_state()
+        brightness = self._brightness.change(action)
+        return self._compose_state(brightness=brightness)
 
 
 controller = RemoteController()

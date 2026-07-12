@@ -1,4 +1,4 @@
-const CACHE_NAME = "remote-c-v20-media-resume-icons";
+const CACHE_NAME = "remote-c-v21-live-wallpaper-glass";
 const APP_SHELL = [
   "/",
   "/styles.css",
@@ -15,6 +15,7 @@ const APP_SHELL = [
   "/brightness.js",
   "/output-routing.js",
   "/feedback.js",
+  "/wallpaper.js",
   "/manifest.webmanifest",
   "/icon.svg",
 ];

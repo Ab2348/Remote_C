@@ -1,11 +1,14 @@
 import asyncio
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from app.services.audio_routing import audio_routing
 from app.services.controller import controller
 from app.services.monitors import SystemEventMonitors
 from app.services.events import event_hub
+from app.services.wallpaper import wallpaper
 
 
 class PactlEventClassificationTests(unittest.TestCase):
@@ -49,6 +52,57 @@ class PactlEventClassificationTests(unittest.TestCase):
             ("routing",),
         )
 
+
+class WallpaperEventClassificationTests(unittest.TestCase):
+    def test_hyde_current_and_thumbnail_links_trigger_refresh(self) -> None:
+        self.assertTrue(
+            SystemEventMonitors._is_wallpaper_change(
+                {
+                    (object(), "/home/carlos/.cache/hyde/wall.set"),
+                    (object(), "/home/carlos/.cache/hyde/wall.thmb"),
+                }
+            )
+        )
+
+    def test_unrelated_hyde_cache_files_are_ignored(self) -> None:
+        self.assertFalse(
+            SystemEventMonitors._is_wallpaper_change(
+                {(object(), "/home/carlos/.cache/hyde/wall.dcol")}
+            )
+        )
+
+
+class WallpaperWatcherTests(unittest.IsolatedAsyncioTestCase):
+    async def test_link_replacement_publishes_the_new_revision(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            cache = Path(directory)
+            first = cache / "first.thmb"
+            second = cache / "second.thmb"
+            first.write_bytes(b"\x89PNG\r\n\x1a\nfirst")
+            second.write_bytes(b"\x89PNG\r\n\x1a\nsecond")
+            link = cache / "wall.thmb"
+            link.symlink_to(first)
+            monitor = SystemEventMonitors()
+
+            with patch.object(wallpaper, "cache_dir", cache):
+                task = asyncio.create_task(monitor._watch_wallpaper())
+
+                try:
+                    async with event_hub.subscribe() as queue:
+                        await asyncio.sleep(0.2)
+                        link.unlink()
+                        link.symlink_to(second)
+                        event_type, state = await asyncio.wait_for(
+                            queue.get(),
+                            timeout=2,
+                        )
+                finally:
+                    task.cancel()
+                    await asyncio.gather(task, return_exceptions=True)
+
+        self.assertEqual(event_type, "wallpaper")
+        self.assertTrue(state["available"])
+        self.assertIn(state["revision"], state["url"])
 
 class RefreshCoalescingTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:

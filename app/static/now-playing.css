@@ -1,7 +1,7 @@
 .now-playing-panel {
   background:
     radial-gradient(circle at 92% 6%, rgba(45, 105, 231, 0.16), transparent 12rem),
-    linear-gradient(150deg, rgba(18, 29, 47, 0.96), rgba(11, 19, 33, 0.92));
+    var(--glass-panel);
 }
 
 .now-playing-indicator {

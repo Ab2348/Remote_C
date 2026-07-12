@@ -32,6 +32,7 @@ window.CSS = { escape: (value) => value };
 
 for (const script of [
   "feedback.js",
+  "wallpaper.js",
   "volume.js",
   "now-playing.js",
   "audio-apps.js",
@@ -117,7 +118,20 @@ EventSourceStub.instance.emit("snapshot", {
       output_label: "Razer Barracuda X",
     }],
   },
+  wallpaper: {
+    available: true,
+    revision: "0123456789abcdef0123",
+    url: "/api/wallpaper/current?v=0123456789abcdef0123",
+  },
 });
+
+const initialWallpaper = [...window.document.querySelectorAll(".wallpaper-layer")]
+  .find((layer) => layer.src.includes("0123456789abcdef0123"));
+if (!initialWallpaper) throw new Error("wallpaper versionado no solicitado");
+initialWallpaper.onload();
+if (!window.document.querySelector("#wallpaper-background").classList.contains("has-wallpaper")) {
+  throw new Error("wallpaper no activado tras cargar");
+}
 
 const text = (selector) => window.document.querySelector(selector).textContent;
 if (text("#volume-display") !== "37%") throw new Error("volumen no renderizado");

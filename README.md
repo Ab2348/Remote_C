@@ -11,6 +11,7 @@ Control remoto local para Arch Linux, accesible desde la red privada de Tailscal
 - Brillo conjunto o independiente para los dos monitores DDC/CI.
 - Selección de salida predeterminada y movimiento de todos los flujos activos.
 - Interfaz PWA móvil con estado actualizado mediante eventos.
+- Wallpaper activo de HyDE sincronizado por eventos y superficies translúcidas.
 
 ## Estado en tiempo real
 
@@ -22,7 +23,7 @@ DDC/CI no ofrece una fuente de eventos. Mientras haya al menos un cliente conect
 
 El frontend usa JavaScript y CSS nativos. Cada control principal vive en un componente independiente dentro de `app/static/`: `volume`, `now-playing`, `audio-apps`, `brightness` y `output-routing`. `app.js` conserva la conexión SSE, distribuye estados y coordina únicamente las acciones generales.
 
-Los componentes no realizan sondeo mientras `EventSource` está disponible. Si el navegador no soporta SSE, `app.js` activa la actualización periódica de respaldo.
+Los componentes no realizan sondeo mientras `EventSource` está disponible. Los cambios de wallpaper se detectan observando los enlaces `wall.set` y `wall.thmb` de la caché de HyDE; por SSE solo viaja la revisión y la miniatura se descarga desde un endpoint versionado. Si el navegador no soporta SSE, `app.js` activa la actualización periódica de respaldo.
 
 ## Desarrollo
 

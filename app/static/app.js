@@ -23,6 +23,12 @@ function renderAudioRouting(state) {
   }));
 }
 
+function renderWallpaper(state) {
+  document.dispatchEvent(new CustomEvent("remote-c:wallpaper", {
+    detail: state,
+  }));
+}
+
 function applyStatePatch(patch) {
   if (systemState === null) {
     requestState();
@@ -52,6 +58,7 @@ function connectEvents() {
     render(snapshot.state);
 
     renderAudioRouting(snapshot.audio_routing);
+    renderWallpaper(snapshot.wallpaper);
 
     setConnection(true);
   });
@@ -72,6 +79,14 @@ function connectEvents() {
 
     renderAudioRouting(state);
 
+    setConnection(true);
+  });
+
+  eventSource.addEventListener("wallpaper", (event) => {
+    const state = parseEvent(event, "wallpaper");
+    if (state === null) return;
+
+    renderWallpaper(state);
     setConnection(true);
   });
 
@@ -131,6 +146,17 @@ async function requestAudioRouting() {
   }
 }
 
+async function requestWallpaper() {
+  try {
+    const response = await fetch("/api/wallpaper", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    renderWallpaper(await response.json());
+  } catch (error) {
+    console.error("No se pudo obtener el wallpaper", error);
+    renderWallpaper({ available: false, revision: null, url: null });
+  }
+}
+
 async function sendAction(button) {
   const { endpoint, action } = button.dataset;
   const panel = button.closest(".panel");
@@ -180,8 +206,10 @@ if ("EventSource" in window) {
 } else {
   requestState();
   requestAudioRouting();
+  requestWallpaper();
   window.setInterval(requestState, 10000);
   window.setInterval(requestAudioRouting, 10000);
+  window.setInterval(requestWallpaper, 10000);
 }
 
 if ("serviceWorker" in navigator) {

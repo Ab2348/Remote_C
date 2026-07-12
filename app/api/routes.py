@@ -28,6 +28,7 @@ from app.services.events import event_hub
 from app.services.media import MediaControlError
 from app.services.monitors import system_event_monitors
 from app.services.volume import VolumeControlError
+from app.services.wallpaper import WallpaperError, wallpaper
 
 
 CONTROL_ERRORS = (
@@ -126,9 +127,10 @@ async def events(request: Request) -> StreamingResponse:
     async def stream():
         async with event_hub.subscribe() as queue:
             try:
-                state, routing = await asyncio.gather(
+                state, routing, wallpaper_state = await asyncio.gather(
                     asyncio.to_thread(controller.get_state),
                     asyncio.to_thread(audio_routing.get_state),
+                    asyncio.to_thread(wallpaper.get_state),
                 )
             except EVENT_ERRORS as error:
                 yield _sse_event("server-error", {"detail": str(error)})
@@ -137,7 +139,11 @@ async def events(request: Request) -> StreamingResponse:
             system_event_monitors.record_brightness_state(state)
             yield _sse_event(
                 "snapshot",
-                {"state": state, "audio_routing": routing},
+                {
+                    "state": state,
+                    "audio_routing": routing,
+                    "wallpaper": wallpaper_state,
+                },
             )
 
             while True:
@@ -170,6 +176,33 @@ def get_state() -> dict:
         return controller.get_state()
     except CONTROL_ERRORS as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.get("/wallpaper")
+def get_wallpaper_state() -> dict:
+    return wallpaper.get_state()
+
+
+@router.get("/wallpaper/current")
+async def get_current_wallpaper(
+    v: Annotated[
+        str,
+        Query(min_length=20, max_length=20, pattern=r"^[a-f0-9]+$"),
+    ],
+) -> FileResponse:
+    try:
+        asset = await asyncio.to_thread(wallpaper.get_asset, v)
+    except WallpaperError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+    return FileResponse(
+        asset.path,
+        media_type=asset.media_type,
+        headers={
+            "Cache-Control": "private, max-age=31536000, immutable",
+            "Content-Security-Policy": "default-src 'none'; sandbox",
+        },
+    )
 
 
 @router.post("/media")

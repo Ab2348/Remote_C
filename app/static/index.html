@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="/output-routing.css" />
     <link rel="stylesheet" href="/feedback.css" />
     <script src="/feedback.js" defer></script>
+    <script src="/wallpaper.js" defer></script>
     <script src="/volume.js" defer></script>
     <script src="/now-playing.js" defer></script>
     <script src="/audio-apps.js" defer></script>
@@ -27,6 +28,11 @@
   </head>
   <body>
     <a class="skip-link" href="#main-content">Saltar al contenido</a>
+    <div id="wallpaper-background" class="wallpaper-background" aria-hidden="true">
+      <img class="wallpaper-layer is-active" alt="" />
+      <img class="wallpaper-layer" alt="" />
+      <div class="wallpaper-scrim"></div>
+    </div>
     <div class="ambient ambient-top" aria-hidden="true"></div>
     <div class="ambient ambient-bottom" aria-hidden="true"></div>
 

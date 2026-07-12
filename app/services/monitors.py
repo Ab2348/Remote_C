@@ -3,7 +3,10 @@ import logging
 import os
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
+from pathlib import Path
 from typing import Literal
+
+from watchfiles import awatch
 
 from app.services.audio_routing import AudioRoutingError, audio_routing
 from app.services.brightness import BrightnessControlError
@@ -11,6 +14,7 @@ from app.services.controller import controller
 from app.services.events import event_hub
 from app.services.media import MediaControlError
 from app.services.volume import VolumeControlError
+from app.services.wallpaper import wallpaper
 
 
 logger = logging.getLogger(__name__)
@@ -49,6 +53,10 @@ class SystemEventMonitors:
             asyncio.create_task(
                 self._watch_brightness(),
                 name="remote-c-brightness-monitor",
+            ),
+            asyncio.create_task(
+                self._supervise("wallpaper", self._watch_wallpaper),
+                name="remote-c-wallpaper-monitor",
             ),
             *(
                 asyncio.create_task(
@@ -165,6 +173,25 @@ class SystemEventMonitors:
                 await self._publish_brightness_if_changed()
             except BrightnessControlError:
                 logger.exception("No se pudo actualizar el brillo")
+
+    async def _watch_wallpaper(self) -> None:
+        async for changes in awatch(
+            wallpaper.cache_dir,
+            recursive=False,
+            debounce=350,
+            step=75,
+        ):
+            if not event_hub.has_subscribers:
+                continue
+
+            if self._is_wallpaper_change(changes):
+                state = await asyncio.to_thread(wallpaper.get_state)
+                await event_hub.publish("wallpaper", state)
+
+    @staticmethod
+    def _is_wallpaper_change(changes: set[tuple[object, str]]) -> bool:
+        watched_names = {"wall.set", "wall.thmb"}
+        return any(Path(path).name in watched_names for _, path in changes)
 
     async def _publish_brightness_if_changed(self) -> None:
         state = await asyncio.to_thread(controller.get_brightness_state)

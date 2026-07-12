@@ -1,9 +1,4 @@
 const connection = document.querySelector("#connection");
-const volumeValue = document.querySelector("#volume-value");
-const muteButton = document.querySelector("#mute-button");
-const track = document.querySelector("#track");
-const playbackState = document.querySelector("#playback-state");
-const playButton = document.querySelector("#play-button");
 const mediaSessionsStatus = document.querySelector("#media-sessions-status");
 const mediaSessions = document.querySelector("#media-sessions");
 const brightnessValues = document.querySelector("#brightness-values");
@@ -51,12 +46,6 @@ function setConnection(online) {
 
 function render(state) {
   systemState = state;
-  volumeValue.textContent = `${state.volume}%`;
-  muteButton.textContent = state.muted ? "Activar sonido" : "Silenciar";
-  track.textContent = state.current_track;
-  playbackState.textContent =
-    playbackLabels[state.playback_status] ?? "Detenido";
-  playButton.textContent = state.playing ? "Pausar" : "Reproducir";
 
   const display1 = state.brightness.display_1;
   const display2 = state.brightness.display_2;
@@ -67,6 +56,10 @@ function render(state) {
       Array.isArray(state.media_sessions) ? state.media_sessions : [],
     );
   }
+
+  document.dispatchEvent(new CustomEvent("remote-c:state", {
+    detail: state,
+  }));
 }
 
 function setMediaSessionsBusy(busy) {
@@ -485,6 +478,7 @@ async function sendMediaSessionAction(player, action) {
 
 async function sendAction(button) {
   const { endpoint, action } = button.dataset;
+  const disabledStates = actionButtons.map((item) => item.disabled);
   actionButtons.forEach((item) => { item.disabled = true; });
 
   try {
@@ -495,14 +489,16 @@ async function sendAction(button) {
     });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    render(await response.json());
+    applyStatePatch(await response.json());
     setConnection(true);
     navigator.vibrate?.(20);
   } catch (error) {
     console.error("No se pudo ejecutar la acción", error);
     setConnection(false);
   } finally {
-    actionButtons.forEach((item) => { item.disabled = false; });
+    actionButtons.forEach((item, index) => {
+      item.disabled = disabledStates[index];
+    });
   }
 }
 

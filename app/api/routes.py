@@ -1,0 +1,58 @@
+from enum import StrEnum
+
+from fastapi import APIRouter
+from pydantic import BaseModel
+
+from app.services.simulated import controller
+
+
+router = APIRouter(prefix="/api")
+
+
+class VolumeAction(StrEnum):
+    UP = "up"
+    DOWN = "down"
+    MUTE = "mute"
+
+
+class MediaAction(StrEnum):
+    PLAY_PAUSE = "play_pause"
+    PREVIOUS = "previous"
+    NEXT = "next"
+
+
+class BrightnessAction(StrEnum):
+    UP = "up"
+    DOWN = "down"
+
+
+class VolumeRequest(BaseModel):
+    action: VolumeAction
+
+
+class MediaRequest(BaseModel):
+    action: MediaAction
+
+
+class BrightnessRequest(BaseModel):
+    action: BrightnessAction
+
+
+@router.get("/state")
+def get_state() -> dict:
+    return controller.get_state()
+
+
+@router.post("/volume")
+def control_volume(request: VolumeRequest) -> dict:
+    return controller.change_volume(request.action)
+
+
+@router.post("/media")
+def control_media(request: MediaRequest) -> dict:
+    return controller.control_media(request.action)
+
+
+@router.post("/brightness")
+def control_brightness(request: BrightnessRequest) -> dict:
+    return controller.change_brightness(request.action)

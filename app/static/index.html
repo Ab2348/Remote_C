@@ -11,7 +11,9 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/volume.css" />
     <script src="/app.js" defer></script>
+    <script src="/volume.js" defer></script>
   </head>
   <body>
     <div class="ambient ambient-top" aria-hidden="true"></div>
@@ -51,17 +53,43 @@
           </div>
         </div>
 
-        <div class="volume-summary">
-          <div>
-            <span class="eyebrow">Nivel actual</span>
-            <output id="volume-value" class="metric-value">--%</output>
-          </div>
-          <span class="summary-note">Salida principal</span>
+        <div class="volume-control-row">
+          <span class="volume-leading-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 10v4h4l5 4V6l-5 4H4z" />
+              <path d="M16 9a4 4 0 0 1 0 6" />
+            </svg>
+          </span>
+
+          <label class="volume-slider-field">
+            <span class="sr-only">Nivel de volumen general</span>
+            <input
+              id="volume-slider"
+              class="volume-range"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value="0"
+              aria-describedby="volume-value"
+            />
+          </label>
+
+          <output id="volume-value" class="volume-percentage" for="volume-slider">--%</output>
+
+          <button
+            id="mute-button"
+            class="volume-mute-button"
+            type="button"
+            data-endpoint="volume"
+            data-action="mute"
+            aria-pressed="false"
+            title="Silenciar"
+          >Silenciar</button>
         </div>
 
-        <div class="controls controls-three segmented-controls">
+        <div class="controls controls-two segmented-controls volume-step-controls">
           <button type="button" data-endpoint="volume" data-action="down" aria-label="Bajar volumen">−</button>
-          <button id="mute-button" type="button" data-endpoint="volume" data-action="mute">Silenciar</button>
           <button type="button" data-endpoint="volume" data-action="up" aria-label="Subir volumen">+</button>
         </div>
       </section>

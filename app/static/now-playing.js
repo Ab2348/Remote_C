@@ -1,40 +1,37 @@
 (() => {
   const panel = document.querySelector(".now-playing-panel");
-  const trackState = document.querySelector("#track");
   const trackTitle = document.querySelector("#track-title");
   const trackArtist = document.querySelector("#track-artist");
   const trackSource = document.querySelector("#track-source");
   const playbackState = document.querySelector("#playback-state");
   const playButton = document.querySelector("#play-button");
-  const mediaSessions = document.querySelector("#media-sessions");
   const mediaButtons = [
     ...document.querySelectorAll('button[data-endpoint="media"]'),
   ];
 
   if (
     !panel
-    || !trackState
     || !trackTitle
     || !trackArtist
     || !trackSource
     || !playbackState
     || !playButton
-    || !mediaSessions
   ) {
     return;
   }
 
-  let updateQueued = false;
+  const playbackLabels = {
+    playing: "Reproduciendo",
+    paused: "Pausado",
+    stopped: "Detenido",
+  };
 
   function splitTrack(value) {
     const normalized = value.trim();
     const separator = normalized.lastIndexOf(" — ");
 
     if (separator === -1) {
-      return {
-        title: normalized,
-        artist: "",
-      };
+      return { title: normalized, artist: "" };
     }
 
     return {
@@ -43,19 +40,12 @@
     };
   }
 
-  function activeSessionLabel() {
-    const sessions = [...mediaSessions.querySelectorAll(".media-session")];
+  function activeSession(state) {
+    const sessions = Array.isArray(state.media_sessions)
+      ? state.media_sessions
+      : [];
 
-    if (sessions.length === 0) {
-      return "";
-    }
-
-    const active = sessions.find((session) => {
-      const status = session.querySelector(".media-session-status");
-      return status?.textContent.trim().toLocaleLowerCase("es") === "reproduciendo";
-    }) ?? sessions[0];
-
-    return active.querySelector("h3")?.textContent.trim() ?? "";
+    return sessions.find((session) => session.playing) ?? sessions[0] ?? null;
   }
 
   function setButtonAvailability(available) {
@@ -75,26 +65,20 @@
     });
   }
 
-  function renderNowPlaying() {
-    updateQueued = false;
-
-    const rawTrack = trackState.textContent.trim();
+  function renderNowPlaying(state) {
+    const rawTrack = String(state.current_track ?? "Sin reproducción").trim();
     const normalizedTrack = rawTrack.toLocaleLowerCase("es");
     const empty = normalizedTrack === "" || normalizedTrack === "sin reproducción";
-    const statusLabel = playbackState.textContent.trim();
-    const status = statusLabel.toLocaleLowerCase("es");
-    const source = activeSessionLabel();
+    const rawStatus = String(state.playback_status ?? "stopped").toLowerCase();
+    const status = rawStatus === "playing" || rawStatus === "paused"
+      ? rawStatus
+      : "stopped";
+    const session = activeSession(state);
     const parsed = splitTrack(rawTrack);
 
     panel.classList.toggle("is-empty", empty);
-    panel.classList.toggle("is-playing", status === "reproduciendo");
-    panel.classList.toggle("is-paused", status === "pausado");
-
-    playbackState.dataset.state = status === "reproduciendo"
-      ? "playing"
-      : status === "pausado"
-        ? "paused"
-        : "stopped";
+    playbackState.dataset.state = status;
+    playbackState.textContent = playbackLabels[status] ?? "Detenido";
 
     if (empty) {
       trackTitle.textContent = "Sin reproducción";
@@ -102,16 +86,17 @@
       trackSource.textContent = "Sin reproductor activo";
     } else {
       trackTitle.textContent = parsed.title || rawTrack;
-      trackArtist.textContent = parsed.artist || source || "Artista desconocido";
-      trackSource.textContent = source || "Reproductor multimedia";
+      trackArtist.textContent = parsed.artist || session?.artist || "Artista desconocido";
+      trackSource.textContent = session?.label || "Reproductor multimedia";
     }
 
     trackTitle.title = trackTitle.textContent;
     trackArtist.title = trackArtist.textContent;
     trackSource.title = trackSource.textContent;
 
-    const playing = status === "reproduciendo";
+    const playing = status === "playing";
     const playLabel = playing ? "Pausar" : "Reproducir";
+    playButton.textContent = playLabel;
     playButton.classList.toggle("is-playing", playing);
     playButton.setAttribute("aria-label", playLabel);
     playButton.title = playLabel;
@@ -119,30 +104,8 @@
     setButtonAvailability(!empty);
   }
 
-  function scheduleUpdate() {
-    if (updateQueued) {
-      return;
-    }
-
-    updateQueued = true;
-    queueMicrotask(renderNowPlaying);
-  }
-
-  const stateObserver = new MutationObserver(scheduleUpdate);
-  stateObserver.observe(trackState, {
-    childList: true,
-    characterData: true,
-    subtree: true,
-  });
-  stateObserver.observe(playbackState, {
-    childList: true,
-    characterData: true,
-    subtree: true,
-  });
-  stateObserver.observe(mediaSessions, {
-    childList: true,
-    subtree: true,
+  document.addEventListener("remote-c:state", (event) => {
+    renderNowPlaying(event.detail);
   });
 
-  renderNowPlaying();
 })();

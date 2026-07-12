@@ -1,10 +1,12 @@
-const CACHE_NAME = "remote-c-v12-volume-fix";
+const CACHE_NAME = "remote-c-v13-now-playing";
 const APP_SHELL = [
   "/",
   "/styles.css",
   "/volume.css",
+  "/now-playing.css",
   "/app.js",
   "/volume.js",
+  "/now-playing.js",
   "/manifest.webmanifest",
   "/icon.svg",
 ];

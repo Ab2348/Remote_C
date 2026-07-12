@@ -13,7 +13,7 @@ STATIC_DIR = BASE_DIR / "app" / "static"
 
 app = FastAPI(
     title="Remote C",
-    version="0.3.0",
+    version="0.4.0",
     description="Control remoto local para Arch Linux",
 )
 
@@ -24,7 +24,7 @@ app.include_router(router)
 def health() -> dict[str, str]:
     return {
         "status": "ok",
-        "mode": "hybrid",
+        "mode": "live",
     }
 
 

@@ -1,12 +1,17 @@
 from enum import StrEnum
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.services.controller import controller
 from app.services.volume import VolumeControlError
 from app.services.media import MediaControlError
 from app.services.brightness import BrightnessControlError
+
+from app.services.audio_routing import (
+    AudioRoutingError,
+    audio_routing,
+)
 
 CONTROL_ERRORS = (
     VolumeControlError,
@@ -46,6 +51,15 @@ class MediaRequest(BaseModel):
 class BrightnessRequest(BaseModel):
     action: BrightnessAction
 
+
+class OutputRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=512)
+
+
+class StreamOutputRequest(OutputRequest):
+    stream_index: int = Field(ge=0)
+
+
 @router.get("/state")
 def get_state() -> dict:
     try:
@@ -75,4 +89,39 @@ def control_brightness(request: BrightnessRequest) -> dict:
     try:
         return controller.change_brightness(request.action)
     except CONTROL_ERRORS as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.get("/audio-routing")
+def get_audio_routing() -> dict:
+    try:
+        return audio_routing.get_state()
+    except AudioRoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.post("/audio-routing/default")
+def set_default_output(request: OutputRequest) -> dict:
+    try:
+        return audio_routing.set_default(request.name)
+    except AudioRoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.post("/audio-routing/force")
+def force_audio_output(request: OutputRequest) -> dict:
+    try:
+        return audio_routing.force_all(request.name)
+    except AudioRoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.post("/audio-routing/stream")
+def move_audio_stream(request: StreamOutputRequest) -> dict:
+    try:
+        return audio_routing.move_stream(
+            request.stream_index,
+            request.name,
+        )
+    except AudioRoutingError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error

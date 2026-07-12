@@ -61,6 +61,27 @@
           <button type="button" data-endpoint="brightness" data-action="up">+ 10%</button>
         </div>
       </section>
+
+      <section class="panel" aria-labelledby="audio-routing-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="audio-routing-title">Audio</h2>
+            <p id="audio-routing-status">Cargando salidas</p>
+          </div>
+        </div>
+
+        <label class="field">
+          <span>Salida predeterminada</span>
+          <select id="audio-output" disabled></select>
+        </label>
+
+        <div class="controls controls-two">
+          <button id="set-default-output" type="button" disabled>Usar salida</button>
+          <button id="force-output" type="button" disabled>Mover todo</button>
+        </div>
+
+        <div class="stream-list" id="audio-streams" aria-live="polite"></div>
+      </section>
     </main>
   </body>
 </html>

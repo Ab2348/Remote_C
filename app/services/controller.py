@@ -44,9 +44,11 @@ class RemoteController:
         volume = self._volume.change(action)
         return self._compose_state(volume=volume)
 
+    def change_volume_state(self, action: str) -> dict:
+        return self._volume.change(action)
+
     def set_volume(self, value: int) -> dict:
-        volume = self._volume.set_volume(value)
-        return self._compose_state(volume=volume)
+        return self._volume.set_volume(value)
 
     def control_media(self, action: str) -> dict:
         media = self._media.control(action)

@@ -12,8 +12,10 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/volume.css" />
+    <link rel="stylesheet" href="/now-playing.css" />
     <script src="/app.js" defer></script>
     <script src="/volume.js" defer></script>
+    <script src="/now-playing.js" defer></script>
   </head>
   <body>
     <div class="ambient ambient-top" aria-hidden="true"></div>
@@ -95,7 +97,7 @@
         </div>
       </section>
 
-      <section class="panel now-playing-panel" aria-labelledby="media-title">
+      <section class="panel now-playing-panel is-empty" aria-labelledby="media-title">
         <div class="panel-heading">
           <div class="section-title">
             <span class="section-icon" aria-hidden="true">
@@ -105,8 +107,10 @@
             </span>
             <h2 id="media-title">Reproduciendo ahora</h2>
           </div>
-          <output id="playback-state" class="panel-chip">Detenido</output>
+          <output id="playback-state" class="panel-chip" data-state="stopped">Detenido</output>
         </div>
+
+        <p id="track" class="sr-only" aria-hidden="true">Sin reproducción</p>
 
         <div class="now-playing">
           <div class="cover-placeholder" aria-hidden="true">
@@ -116,16 +120,50 @@
               <circle cx="16" cy="16" r="3" />
             </svg>
           </div>
-          <div class="track-copy">
-            <span class="eyebrow">Contenido activo</span>
-            <p id="track">Sin reproducción</p>
+
+          <div class="now-playing-copy">
+            <span id="track-source" class="now-playing-source">Sin reproductor activo</span>
+            <p id="track-title" class="track-title">Sin reproducción</p>
+            <p id="track-artist" class="track-artist">Inicia contenido multimedia en el equipo</p>
           </div>
         </div>
 
         <div class="controls controls-three media-controls">
-          <button type="button" data-endpoint="media" data-action="previous" aria-label="Pista anterior">Anterior</button>
-          <button id="play-button" class="primary-control" type="button" data-endpoint="media" data-action="play_pause">Reproducir</button>
-          <button type="button" data-endpoint="media" data-action="next" aria-label="Pista siguiente">Siguiente</button>
+          <button
+            class="media-control-button"
+            type="button"
+            data-endpoint="media"
+            data-action="previous"
+            aria-label="Pista anterior"
+            title="Pista anterior"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 5v14M18 6l-9 6 9 6V6z" />
+            </svg>
+          </button>
+
+          <button
+            id="play-button"
+            class="media-control-button primary-control"
+            type="button"
+            data-endpoint="media"
+            data-action="play_pause"
+            aria-label="Reproducir"
+            title="Reproducir"
+          >Reproducir</button>
+
+          <button
+            class="media-control-button"
+            type="button"
+            data-endpoint="media"
+            data-action="next"
+            aria-label="Pista siguiente"
+            title="Pista siguiente"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 5v14M6 6l9 6-9 6V6z" />
+            </svg>
+          </button>
         </div>
       </section>
 

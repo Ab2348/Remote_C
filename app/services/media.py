@@ -14,6 +14,11 @@ class PlayerState:
     title: str
     artist: str
     duration_us: int
+    can_play: bool
+    can_pause: bool
+    can_previous: bool
+    can_next: bool
+    can_seek: bool
 
     @property
     def current_track(self) -> str:
@@ -80,6 +85,14 @@ class PlayerctlMediaService:
                 "artist": player.artist,
                 "current_track": player.current_track,
                 "duration_seconds": round(player.duration_us / 1_000_000),
+                "can_play_pause": (
+                    player.can_pause
+                    if player.status.casefold() == "playing"
+                    else player.can_play
+                ),
+                "can_previous": player.can_previous,
+                "can_next": player.can_next,
+                "can_seek": player.can_seek,
             }
             for player in players
         ]
@@ -188,6 +201,7 @@ class PlayerctlMediaService:
         except ValueError:
             duration_us = 0
 
+        capabilities = self._read_capabilities(name)
         base_name = name.split(".instance", maxsplit=1)[0]
         label = base_name.replace("-", " ").replace("_", " ").title()
 
@@ -198,7 +212,61 @@ class PlayerctlMediaService:
             title=fields[1],
             artist=fields[2],
             duration_us=max(0, duration_us),
+            can_play=capabilities["CanPlay"],
+            can_pause=capabilities["CanPause"],
+            can_previous=capabilities["CanGoPrevious"],
+            can_next=capabilities["CanGoNext"],
+            can_seek=capabilities["CanSeek"],
         )
+
+    @staticmethod
+    def _read_capabilities(name: str) -> dict[str, bool]:
+        properties = (
+            "CanControl",
+            "CanPlay",
+            "CanPause",
+            "CanGoPrevious",
+            "CanGoNext",
+            "CanSeek",
+        )
+        fallback = {property_name: False for property_name in properties}
+
+        try:
+            result = subprocess.run(
+                [
+                    "busctl",
+                    "--user",
+                    "get-property",
+                    f"org.mpris.MediaPlayer2.{name}",
+                    "/org/mpris/MediaPlayer2",
+                    "org.mpris.MediaPlayer2.Player",
+                    *properties,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=3,
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return fallback
+
+        if result.returncode != 0:
+            return fallback
+
+        values = [
+            line.split(maxsplit=1)[1].casefold() == "true"
+            for line in result.stdout.splitlines()
+            if line.startswith("b ")
+        ]
+
+        if len(values) != len(properties):
+            return fallback
+
+        capabilities = dict(zip(properties, values, strict=True))
+
+        if not capabilities["CanControl"]:
+            return fallback
+
+        return capabilities
 
     @staticmethod
     def _run(*arguments: str, allow_empty: bool = False) -> str:

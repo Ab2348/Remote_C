@@ -1,16 +1,16 @@
 (() => {
   const panel = document.querySelector(".volume-panel");
   const slider = document.querySelector("#volume-slider");
-  const valueOutput = document.querySelector("#volume-value");
+  const stateOutput = document.querySelector("#volume-value");
+  const displayOutput = document.querySelector("#volume-display");
   const muteButton = document.querySelector("#mute-button");
 
-  if (!panel || !slider || !valueOutput || !muteButton) {
+  if (!panel || !slider || !stateOutput || !displayOutput || !muteButton) {
     return;
   }
 
   let volumeInteracting = false;
   let requestInFlight = false;
-  let ignoreNextReadoutMutation = false;
   let lastConfirmedVolume = null;
   let pendingRenderedVolume = null;
 
@@ -25,7 +25,7 @@
   }
 
   function parseRenderedVolume() {
-    const match = valueOutput.textContent.match(/-?\d+(?:\.\d+)?/);
+    const match = stateOutput.textContent.match(/-?\d+(?:\.\d+)?/);
 
     if (match === null) {
       return null;
@@ -43,9 +43,8 @@
 
   function renderReadout(value) {
     const percentage = normalizePercentage(value);
-    ignoreNextReadoutMutation = true;
-    valueOutput.value = `${percentage}%`;
-    valueOutput.textContent = `${percentage}%`;
+    displayOutput.value = `${percentage}%`;
+    displayOutput.textContent = `${percentage}%`;
   }
 
   function renderLocalVolume(value) {
@@ -61,11 +60,6 @@
   }
 
   function syncVolumeFromRenderedState() {
-    if (ignoreNextReadoutMutation) {
-      ignoreNextReadoutMutation = false;
-      return;
-    }
-
     const renderedVolume = parseRenderedVolume();
 
     if (renderedVolume === null) {
@@ -77,8 +71,7 @@
       return;
     }
 
-    lastConfirmedVolume = renderedVolume;
-    renderSlider(renderedVolume);
+    applyConfirmedVolume(renderedVolume);
   }
 
   function applyMuteState(muted) {
@@ -148,17 +141,15 @@
     setVolume(slider.value);
   }
 
-  const stateObserver = new MutationObserver(() => {
-    syncVolumeFromRenderedState();
-    syncMuteFromRenderedState();
-  });
-
-  stateObserver.observe(valueOutput, {
+  const volumeObserver = new MutationObserver(syncVolumeFromRenderedState);
+  volumeObserver.observe(stateOutput, {
     childList: true,
     characterData: true,
     subtree: true,
   });
-  stateObserver.observe(muteButton, {
+
+  const muteObserver = new MutationObserver(syncMuteFromRenderedState);
+  muteObserver.observe(muteButton, {
     childList: true,
     characterData: true,
     subtree: true,

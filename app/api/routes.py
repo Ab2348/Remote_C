@@ -1,6 +1,7 @@
 import asyncio
 import json
 from enum import StrEnum
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -72,6 +73,23 @@ class StreamVolumeRequest(BaseModel):
 
 class StreamMuteRequest(BaseModel):
     stream_index: int = Field(ge=0)
+
+
+StreamIndex = Annotated[int, Field(ge=0)]
+
+
+class ApplicationOutputRequest(OutputRequest):
+    stream_indexes: list[StreamIndex] = Field(min_length=1, max_length=64)
+
+
+class ApplicationVolumeRequest(BaseModel):
+    stream_indexes: list[StreamIndex] = Field(min_length=1, max_length=64)
+    volume: int = Field(ge=0, le=100)
+
+
+class ApplicationMuteRequest(BaseModel):
+    stream_indexes: list[StreamIndex] = Field(min_length=1, max_length=64)
+    muted: bool
 
 
 def _sse_event(event_type: str, payload: dict) -> str:
@@ -244,6 +262,44 @@ async def toggle_stream_mute(request: StreamMuteRequest) -> dict:
         return await _publish_audio_routing(
             audio_routing.toggle_stream_mute,
             request.stream_index,
+        )
+    except AudioRoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.post("/audio-routing/application/output")
+async def move_audio_application(request: ApplicationOutputRequest) -> dict:
+    try:
+        return await _publish_audio_routing(
+            audio_routing.move_streams,
+            request.stream_indexes,
+            request.name,
+        )
+    except AudioRoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.post("/audio-routing/application/volume")
+async def set_application_volume(
+    request: ApplicationVolumeRequest,
+) -> dict:
+    try:
+        return await _publish_audio_routing(
+            audio_routing.set_streams_volume,
+            request.stream_indexes,
+            request.volume,
+        )
+    except AudioRoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.post("/audio-routing/application/mute")
+async def set_application_mute(request: ApplicationMuteRequest) -> dict:
+    try:
+        return await _publish_audio_routing(
+            audio_routing.set_streams_mute,
+            request.stream_indexes,
+            request.muted,
         )
     except AudioRoutingError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error

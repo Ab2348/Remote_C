@@ -141,7 +141,7 @@ class ScopedRefreshTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_routing_refresh_does_not_query_volume(self) -> None:
         monitor = SystemEventMonitors()
-        routing_state = {"outputs": [], "streams": []}
+        routing_state = {"outputs": [], "applications": []}
 
         with (
             patch.object(controller, "get_volume_state") as get_volume,

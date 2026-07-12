@@ -411,14 +411,12 @@ svg {
   font-weight: 700;
 }
 
-.stream-list,
 .media-session-list {
   display: grid;
   gap: 0.62rem;
   margin-top: 0.82rem;
 }
 
-.stream,
 .media-session {
   display: grid;
   gap: 0.72rem;
@@ -429,7 +427,6 @@ svg {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
 
-.stream h3,
 .media-session h3 {
   margin: 0;
   overflow-wrap: anywhere;
@@ -438,7 +435,6 @@ svg {
   line-height: 1.3;
 }
 
-.stream p,
 .media-session p,
 .empty {
   margin-top: 0.12rem;
@@ -486,55 +482,6 @@ svg {
   font-size: 0.78rem;
 }
 
-.stream-controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.52rem;
-  align-items: end;
-}
-
-.stream-volume {
-  display: grid;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.stream-volume-label {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  color: var(--muted-strong);
-  font-size: 0.75rem;
-  font-weight: 680;
-}
-
-.stream-volume-label output {
-  min-width: 3rem;
-  color: #72a0ff;
-  text-align: right;
-}
-
-.stream-controls > button {
-  min-width: 5.6rem;
-}
-
-.stream-mute[aria-pressed="true"] {
-  border-color: rgba(255, 161, 93, 0.42);
-  background: rgba(121, 64, 21, 0.62);
-  color: #ffd2a8;
-}
-
-.stream-routing {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.52rem;
-}
-
-.stream-routing button {
-  min-width: 5.2rem;
-}
-
 .output-actions .primary-control {
   box-shadow: 0 8px 18px rgba(17, 88, 231, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -576,15 +523,6 @@ svg {
     font-size: 0.78rem;
   }
 
-  .stream-controls,
-  .stream-routing {
-    grid-template-columns: 1fr;
-  }
-
-  .stream-controls > button,
-  .stream-routing button {
-    width: 100%;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

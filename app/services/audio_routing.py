@@ -45,29 +45,72 @@ class PactlAudioRoutingService:
                 }
                 for sink in sinks
             ],
-            "streams": [
+            "applications": self._serialize_applications(
+                streams,
+                sink_by_index,
+            ),
+        }
+
+    @staticmethod
+    def _serialize_applications(
+        streams: list[AudioStream],
+        sink_by_index: dict[int, AudioSink],
+    ) -> list[dict]:
+        groups: dict[str, list[AudioStream]] = {}
+
+        for stream in streams:
+            identity = stream.binary or stream.application
+            application_id = identity.strip().casefold()
+            groups.setdefault(application_id, []).append(stream)
+
+        applications: list[dict] = []
+
+        for application_id, group in groups.items():
+            output_indexes = {stream.sink for stream in group}
+            output = (
+                sink_by_index.get(next(iter(output_indexes)))
+                if len(output_indexes) == 1
+                else None
+            )
+            muted_count = sum(stream.muted for stream in group)
+            media_names = list(
+                dict.fromkeys(stream.media for stream in group if stream.media)
+            )
+
+            applications.append(
                 {
-                    "index": stream.index,
-                    "application": stream.application,
-                    "media": stream.media,
-                    "binary": stream.binary,
-                    "pid": stream.pid,
-                    "volume": stream.volume,
-                    "muted": stream.muted,
-                    "output_name": (
-                        sink_by_index[stream.sink].name
-                        if stream.sink in sink_by_index
-                        else None
+                    "id": application_id,
+                    "application": group[0].application,
+                    "binary": group[0].binary,
+                    "pids": list(
+                        dict.fromkeys(stream.pid for stream in group if stream.pid)
                     ),
+                    "media": media_names,
+                    "stream_indexes": [stream.index for stream in group],
+                    "stream_count": len(group),
+                    "volume": round(
+                        sum(stream.volume for stream in group) / len(group)
+                    ),
+                    "mixed_volume": len({stream.volume for stream in group}) > 1,
+                    "muted": muted_count == len(group),
+                    "partially_muted": 0 < muted_count < len(group),
+                    "output_name": output.name if output else None,
                     "output_label": (
-                        sink_by_index[stream.sink].label
-                        if stream.sink in sink_by_index
-                        else "Salida desconocida"
+                        output.label
+                        if output
+                        else (
+                            "Varias salidas"
+                            if len(output_indexes) > 1
+                            else "Salida desconocida"
+                        )
                     ),
                 }
-                for stream in streams
-            ],
-        }
+            )
+
+        return sorted(
+            applications,
+            key=lambda application: application["application"].casefold(),
+        )
 
     def set_default(self, output_name: str) -> dict:
         sink = self._find_sink(output_name)
@@ -94,22 +137,25 @@ class PactlAudioRoutingService:
 
         if failed:
             indexes = ", ".join(str(index) for index in failed)
-            raise AudioRoutingError(
-                f"No se pudieron mover los flujos: {indexes}"
-            )
+            raise AudioRoutingError(f"No se pudieron mover los flujos: {indexes}")
 
         return self.get_state()
 
     def move_stream(self, stream_index: int, output_name: str) -> dict:
-        sink = self._find_sink(output_name)
-        self._find_stream(stream_index)
+        return self.move_streams([stream_index], output_name)
 
-        self._run(
+    def move_streams(
+        self,
+        stream_indexes: list[int],
+        output_name: str,
+    ) -> dict:
+        sink = self._find_sink(output_name)
+        streams = self._find_streams(stream_indexes)
+        self._run_for_streams(
+            streams,
             "move-sink-input",
-            str(stream_index),
             sink.name,
         )
-
         return self.get_state()
 
     def set_stream_volume(
@@ -117,19 +163,23 @@ class PactlAudioRoutingService:
         stream_index: int,
         volume: int,
     ) -> dict:
-        self._find_stream(stream_index)
+        return self.set_streams_volume([stream_index], volume)
+
+    def set_streams_volume(
+        self,
+        stream_indexes: list[int],
+        volume: int,
+    ) -> dict:
+        streams = self._find_streams(stream_indexes)
 
         if not 0 <= volume <= 100:
-            raise AudioRoutingError(
-                "El volumen debe estar entre 0 y 100"
-            )
+            raise AudioRoutingError("El volumen debe estar entre 0 y 100")
 
-        self._run(
+        self._run_for_streams(
+            streams,
             "set-sink-input-volume",
-            str(stream_index),
             f"{volume}%",
         )
-
         return self.get_state()
 
     def toggle_stream_mute(self, stream_index: int) -> dict:
@@ -143,23 +193,63 @@ class PactlAudioRoutingService:
 
         return self.get_state()
 
+    def set_streams_mute(
+        self,
+        stream_indexes: list[int],
+        muted: bool,
+    ) -> dict:
+        streams = self._find_streams(stream_indexes)
+        self._run_for_streams(
+            streams,
+            "set-sink-input-mute",
+            "1" if muted else "0",
+        )
+        return self.get_state()
+
+    def _run_for_streams(
+        self,
+        streams: list[AudioStream],
+        command: str,
+        value: str,
+    ) -> None:
+        failed: list[int] = []
+
+        for stream in streams:
+            try:
+                self._run(command, str(stream.index), value)
+            except AudioRoutingError:
+                failed.append(stream.index)
+
+        if failed:
+            indexes = ", ".join(str(index) for index in failed)
+            raise AudioRoutingError(f"No se pudieron actualizar los flujos: {indexes}")
+
     def _find_stream(self, stream_index: int) -> AudioStream:
         for stream in self._get_streams():
             if stream.index == stream_index:
                 return stream
 
-        raise AudioRoutingError(
-            "El flujo seleccionado ya no está disponible"
-        )
+        raise AudioRoutingError("El flujo seleccionado ya no está disponible")
+
+    def _find_streams(self, stream_indexes: list[int]) -> list[AudioStream]:
+        requested = set(stream_indexes)
+        streams = [
+            stream for stream in self._get_streams() if stream.index in requested
+        ]
+
+        if not streams:
+            raise AudioRoutingError(
+                "La aplicación seleccionada ya no está reproduciendo audio"
+            )
+
+        return streams
 
     def _find_sink(self, output_name: str) -> AudioSink:
         for sink in self._get_sinks():
             if sink.name == output_name:
                 return sink
 
-        raise AudioRoutingError(
-            "La salida seleccionada ya no está disponible"
-        )
+        raise AudioRoutingError("La salida seleccionada ya no está disponible")
 
     def _get_sinks(self) -> list[AudioSink]:
         data = self._run_json("list", "sinks")
@@ -207,12 +297,7 @@ class PactlAudioRoutingService:
                 if isinstance(channel, dict) and "value" in channel
             ]
             volume = (
-                round(
-                    sum(channel_values)
-                    / len(channel_values)
-                    / 65536
-                    * 100
-                )
+                round(sum(channel_values) / len(channel_values) / 65536 * 100)
                 if channel_values
                 else 0
             )
@@ -227,12 +312,8 @@ class PactlAudioRoutingService:
                         or "Aplicación"
                     ),
                     media=str(properties.get("media.name") or "Audio"),
-                    binary=str(
-                        properties.get("application.process.binary") or ""
-                    ),
-                    pid=str(
-                        properties.get("application.process.id") or ""
-                    ),
+                    binary=str(properties.get("application.process.binary") or ""),
+                    pid=str(properties.get("application.process.id") or ""),
                     volume=volume,
                     muted=bool(item.get("mute", False)),
                 )
@@ -251,9 +332,7 @@ class PactlAudioRoutingService:
             ) from error
 
         if not isinstance(value, list):
-            raise AudioRoutingError(
-                "pactl devolvió una estructura inesperada"
-            )
+            raise AudioRoutingError("pactl devolvió una estructura inesperada")
 
         return value
 
@@ -273,13 +352,9 @@ class PactlAudioRoutingService:
                 env=environment,
             )
         except FileNotFoundError as error:
-            raise AudioRoutingError(
-                "pactl no está disponible"
-            ) from error
+            raise AudioRoutingError("pactl no está disponible") from error
         except subprocess.TimeoutExpired as error:
-            raise AudioRoutingError(
-                "pactl tardó demasiado en responder"
-            ) from error
+            raise AudioRoutingError("pactl tardó demasiado en responder") from error
 
         if result.returncode != 0:
             message = result.stderr.strip() or "pactl devolvió un error"

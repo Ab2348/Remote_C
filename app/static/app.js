@@ -3,11 +3,9 @@ const mediaSessionsStatus = document.querySelector("#media-sessions-status");
 const mediaSessions = document.querySelector("#media-sessions");
 const brightnessValues = document.querySelector("#brightness-values");
 const actionButtons = [...document.querySelectorAll("button[data-endpoint]")];
-const audioRoutingStatus = document.querySelector("#audio-routing-status");
 const audioOutput = document.querySelector("#audio-output");
 const setDefaultOutputButton = document.querySelector("#set-default-output");
 const forceOutputButton = document.querySelector("#force-output");
-const audioStreams = document.querySelector("#audio-streams");
 const audioRoutingButtons = [setDefaultOutputButton, forceOutputButton];
 
 const playbackLabels = {
@@ -18,26 +16,15 @@ const playbackLabels = {
 
 let audioRoutingState = {
   outputs: [],
-  streams: [],
+  applications: [],
 };
 
 let audioRoutingBusy = false;
-let audioRoutingInteracting = false;
 let mediaSessionsBusy = false;
 let stateRequestInFlight = false;
 let systemState = null;
 let eventSource = null;
 let pendingAudioRoutingState = null;
-
-function normalizePercentage(value) {
-  const percentage = Number(value);
-
-  if (!Number.isFinite(percentage)) {
-    return 0;
-  }
-
-  return Math.min(100, Math.max(0, Math.round(percentage)));
-}
 
 function setConnection(online) {
   connection.textContent = online ? "Conectado" : "Sin conexión";
@@ -165,9 +152,6 @@ function setAudioRoutingBusy(busy) {
 
   audioOutput.disabled = disabled;
   audioRoutingButtons.forEach((button) => { button.disabled = disabled; });
-  audioStreams
-    .querySelectorAll("select, button, input")
-    .forEach((control) => { control.disabled = disabled; });
 
   applyPendingAudioRouting();
 }
@@ -175,7 +159,6 @@ function setAudioRoutingBusy(busy) {
 function applyPendingAudioRouting() {
   if (
     audioRoutingBusy
-    || audioRoutingInteracting
     || pendingAudioRoutingState === null
   ) {
     return;
@@ -184,11 +167,6 @@ function applyPendingAudioRouting() {
   const state = pendingAudioRoutingState;
   pendingAudioRoutingState = null;
   renderAudioRouting(state);
-}
-
-function finishAudioRoutingInteraction() {
-  audioRoutingInteracting = false;
-  window.setTimeout(applyPendingAudioRouting, 0);
 }
 
 function renderOutputOptions(selectedName) {
@@ -211,123 +189,14 @@ function renderOutputOptions(selectedName) {
   }
 }
 
-function renderStream(stream) {
-  const streamVolume = normalizePercentage(stream.volume);
-  const item = document.createElement("article");
-  item.className = "stream";
-
-  const content = document.createElement("div");
-
-  const title = document.createElement("h3");
-  title.textContent = stream.application;
-
-  const description = document.createElement("p");
-  description.textContent = `${stream.media} · ${stream.output_label}`;
-
-  content.append(title, description);
-
-  const controls = document.createElement("div");
-  controls.className = "stream-controls";
-
-  const volumeControl = document.createElement("label");
-  volumeControl.className = "stream-volume";
-
-  const volumeHeading = document.createElement("span");
-  volumeHeading.textContent = "Volumen";
-
-  const volumeValue = document.createElement("output");
-  volumeValue.value = `${streamVolume}%`;
-  volumeValue.textContent = `${streamVolume}%`;
-
-  const volumeLabel = document.createElement("span");
-  volumeLabel.className = "stream-volume-label";
-  volumeLabel.append(volumeHeading, volumeValue);
-
-  const volume = document.createElement("input");
-  volume.type = "range";
-  volume.min = "0";
-  volume.max = "100";
-  volume.step = "1";
-  volume.value = String(streamVolume);
-  volume.setAttribute("aria-label", `Volumen de ${stream.application}`);
-  volume.addEventListener("pointerdown", () => {
-    audioRoutingInteracting = true;
-  });
-  volume.addEventListener("pointerup", finishAudioRoutingInteraction);
-  volume.addEventListener("pointercancel", finishAudioRoutingInteraction);
-  volume.addEventListener("input", () => {
-    volumeValue.value = `${volume.value}%`;
-    volumeValue.textContent = `${volume.value}%`;
-  });
-  volume.addEventListener("change", () => {
-    const value = normalizePercentage(volume.value);
-    audioRoutingInteracting = false;
-    setStreamVolume(stream.index, value);
-  });
-
-  volumeControl.append(volumeLabel, volume);
-
-  const muteButton = document.createElement("button");
-  muteButton.type = "button";
-  muteButton.className = "stream-mute";
-  muteButton.textContent = stream.muted ? "Activar sonido" : "Silenciar";
-  muteButton.setAttribute("aria-pressed", String(stream.muted));
-  muteButton.addEventListener("click", () => {
-    toggleStreamMute(stream.index);
-  });
-
-  const routingControls = document.createElement("div");
-  routingControls.className = "stream-routing";
-
-  const select = document.createElement("select");
-  select.setAttribute("aria-label", `Salida para ${stream.application}`);
-
-  audioRoutingState.outputs.forEach((output) => {
-    const option = document.createElement("option");
-    option.value = output.name;
-    option.textContent = output.label;
-    select.append(option);
-  });
-
-  if (stream.output_name) {
-    select.value = stream.output_name;
-  }
-
-  const button = document.createElement("button");
-  button.type = "button";
-  button.textContent = "Mover";
-  button.addEventListener("click", () => {
-    moveStream(stream.index, select.value);
-  });
-
-  routingControls.append(select, button);
-  controls.append(volumeControl, muteButton, routingControls);
-  item.append(content, controls);
-
-  return item;
-}
-
 function renderAudioRouting(state) {
   const selectedName = audioOutput.value;
 
   audioRoutingState = state;
   renderOutputOptions(selectedName);
-  audioStreams.replaceChildren();
-
-  if (state.outputs.length === 0) {
-    audioRoutingStatus.textContent = "Sin salidas disponibles";
-  } else if (state.streams.length === 0) {
-    audioRoutingStatus.textContent = `${state.outputs.length} salidas · sin flujos activos`;
-    const empty = document.createElement("p");
-    empty.className = "empty";
-    empty.textContent = "No hay aplicaciones reproduciendo audio.";
-    audioStreams.append(empty);
-  } else {
-    audioRoutingStatus.textContent = `${state.outputs.length} salidas · ${state.streams.length} flujos activos`;
-    state.streams.forEach((stream) => {
-      audioStreams.append(renderStream(stream));
-    });
-  }
+  document.dispatchEvent(new CustomEvent("remote-c:audio-routing", {
+    detail: state,
+  }));
 
   setAudioRoutingBusy(false);
 }
@@ -361,7 +230,7 @@ function connectEvents() {
 
     render(snapshot.state);
 
-    if (audioRoutingBusy || audioRoutingInteracting) {
+    if (audioRoutingBusy) {
       pendingAudioRoutingState = snapshot.audio_routing;
     } else {
       renderAudioRouting(snapshot.audio_routing);
@@ -384,7 +253,7 @@ function connectEvents() {
     const state = parseEvent(event, "audio-routing");
     if (state === null) return;
 
-    if (audioRoutingBusy || audioRoutingInteracting) {
+    if (audioRoutingBusy) {
       pendingAudioRoutingState = state;
     } else {
       renderAudioRouting(state);
@@ -429,7 +298,7 @@ async function requestState() {
 }
 
 async function requestAudioRouting() {
-  if (audioRoutingBusy || audioRoutingInteracting) {
+  if (audioRoutingBusy) {
     return;
   }
 
@@ -439,9 +308,8 @@ async function requestAudioRouting() {
     renderAudioRouting(await response.json());
   } catch (error) {
     console.error("No se pudo obtener el ruteo de audio", error);
-    audioRoutingStatus.textContent = "Audio no disponible";
-    audioStreams.replaceChildren();
-    audioRoutingState = { outputs: [], streams: [] };
+    audioRoutingState = { outputs: [], applications: [] };
+    document.dispatchEvent(new CustomEvent("remote-c:audio-routing-error"));
     setAudioRoutingBusy(false);
   }
 }
@@ -517,7 +385,7 @@ async function sendAudioRoutingAction(path, body) {
     navigator.vibrate?.(20);
   } catch (error) {
     console.error("No se pudo cambiar el ruteo de audio", error);
-    audioRoutingStatus.textContent = "No se pudo aplicar el cambio";
+    document.dispatchEvent(new CustomEvent("remote-c:audio-routing-error"));
     setAudioRoutingBusy(false);
     await requestAudioRouting();
   } finally {
@@ -527,26 +395,6 @@ async function sendAudioRoutingAction(path, body) {
 
 function selectedAudioOutput() {
   return audioOutput.value;
-}
-
-function moveStream(streamIndex, outputName) {
-  return sendAudioRoutingAction("stream", {
-    stream_index: streamIndex,
-    name: outputName,
-  });
-}
-
-function setStreamVolume(streamIndex, volume) {
-  return sendAudioRoutingAction("stream/volume", {
-    stream_index: streamIndex,
-    volume,
-  });
-}
-
-function toggleStreamMute(streamIndex) {
-  return sendAudioRoutingAction("stream/mute", {
-    stream_index: streamIndex,
-  });
 }
 
 actionButtons.forEach((button) => {
@@ -559,6 +407,10 @@ setDefaultOutputButton.addEventListener("click", () => {
 
 forceOutputButton.addEventListener("click", () => {
   sendAudioRoutingAction("force", { name: selectedAudioOutput() });
+});
+
+document.addEventListener("remote-c:audio-routing-update", (event) => {
+  renderAudioRouting(event.detail);
 });
 
 if ("EventSource" in window) {

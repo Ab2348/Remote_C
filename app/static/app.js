@@ -4,6 +4,8 @@ const muteButton = document.querySelector("#mute-button");
 const track = document.querySelector("#track");
 const playbackState = document.querySelector("#playback-state");
 const playButton = document.querySelector("#play-button");
+const mediaSessionsStatus = document.querySelector("#media-sessions-status");
+const mediaSessions = document.querySelector("#media-sessions");
 const brightnessValues = document.querySelector("#brightness-values");
 const actionButtons = [...document.querySelectorAll("button[data-endpoint]")];
 const audioRoutingStatus = document.querySelector("#audio-routing-status");
@@ -26,6 +28,7 @@ let audioRoutingState = {
 
 let audioRoutingBusy = false;
 let audioRoutingInteracting = false;
+let mediaSessionsBusy = false;
 
 function normalizePercentage(value) {
   const percentage = Number(value);
@@ -53,6 +56,87 @@ function render(state) {
   const display1 = state.brightness.display_1;
   const display2 = state.brightness.display_2;
   brightnessValues.textContent = `Monitor 1: ${display1}% · Monitor 2: ${display2}%`;
+
+  if (!mediaSessionsBusy) {
+    renderMediaSessions(
+      Array.isArray(state.media_sessions) ? state.media_sessions : [],
+    );
+  }
+}
+
+function setMediaSessionsBusy(busy) {
+  mediaSessionsBusy = busy;
+  mediaSessions
+    .querySelectorAll("button")
+    .forEach((button) => { button.disabled = busy; });
+}
+
+function renderMediaSession(player) {
+  const item = document.createElement("article");
+  item.className = "media-session";
+
+  const heading = document.createElement("div");
+  heading.className = "media-session-heading";
+
+  const content = document.createElement("div");
+  const title = document.createElement("h3");
+  title.textContent = player.label;
+
+  const track = document.createElement("p");
+  track.textContent = player.current_track || "Sin reproducción";
+  content.append(title, track);
+
+  const status = document.createElement("span");
+  status.className = "media-session-status";
+  status.textContent =
+    playbackLabels[player.status] ?? "Detenido";
+
+  heading.append(content, status);
+
+  const controls = document.createElement("div");
+  controls.className = "media-session-controls";
+
+  const actions = [
+    ["previous", "Anterior"],
+    ["seek_backward", "−10 s"],
+    ["play_pause", player.playing ? "Pausar" : "Reproducir"],
+    ["seek_forward", "+10 s"],
+    ["next", "Siguiente"],
+  ];
+
+  actions.forEach(([action, label]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", () => {
+      sendMediaSessionAction(player.name, action);
+    });
+    controls.append(button);
+  });
+
+  item.append(heading, controls);
+  return item;
+}
+
+function renderMediaSessions(players) {
+  mediaSessions.replaceChildren();
+
+  if (players.length === 0) {
+    mediaSessionsStatus.textContent = "Sin reproductores disponibles";
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = "No hay sesiones multimedia activas.";
+    mediaSessions.append(empty);
+  } else {
+    mediaSessionsStatus.textContent =
+      `${players.length} ${players.length === 1 ? "sesión" : "sesiones"} activas`;
+
+    players.forEach((player) => {
+      mediaSessions.append(renderMediaSession(player));
+    });
+  }
+
+  setMediaSessionsBusy(false);
 }
 
 function setAudioRoutingBusy(busy) {
@@ -240,6 +324,34 @@ async function requestAudioRouting() {
     audioStreams.replaceChildren();
     audioRoutingState = { outputs: [], streams: [] };
     setAudioRoutingBusy(false);
+  }
+}
+
+async function sendMediaSessionAction(player, action) {
+  setMediaSessionsBusy(true);
+
+  try {
+    const response = await fetch("/api/media/sessions/control", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ player, action }),
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const state = await response.json();
+    mediaSessionsBusy = false;
+    renderMediaSessions(
+      Array.isArray(state.players) ? state.players : [],
+    );
+    navigator.vibrate?.(20);
+  } catch (error) {
+    console.error("No se pudo controlar el reproductor", error);
+    mediaSessionsStatus.textContent = "No se pudo aplicar la acción";
+    mediaSessionsBusy = false;
+    await requestState();
+  } finally {
+    setMediaSessionsBusy(false);
   }
 }
 

@@ -29,6 +29,7 @@ let audioRoutingState = {
 let audioRoutingBusy = false;
 let audioRoutingInteracting = false;
 let mediaSessionsBusy = false;
+let stateRequestInFlight = false;
 
 function normalizePercentage(value) {
   const percentage = Number(value);
@@ -320,6 +321,12 @@ function renderAudioRouting(state) {
 }
 
 async function requestState() {
+  if (stateRequestInFlight) {
+    return;
+  }
+
+  stateRequestInFlight = true;
+
   try {
     const response = await fetch("/api/state", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -328,6 +335,8 @@ async function requestState() {
   } catch (error) {
     console.error("No se pudo obtener el estado", error);
     setConnection(false);
+  } finally {
+    stateRequestInFlight = false;
   }
 }
 

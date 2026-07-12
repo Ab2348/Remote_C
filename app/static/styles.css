@@ -215,6 +215,53 @@ output {
   gap: 0.55rem;
 }
 
+
+.media-session-list {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.media-session {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid #243044;
+  border-radius: 0.8rem;
+  background: #0f172a;
+}
+
+.media-session-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.media-session h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.media-session p {
+  overflow-wrap: anywhere;
+}
+
+.media-session-status {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.media-session-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));
+  gap: 0.55rem;
+}
+
+.media-session-controls button {
+  min-width: 0;
+}
+
 @media (max-width: 24rem) {
   .controls-three {
     grid-template-columns: 1fr;

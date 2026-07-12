@@ -24,6 +24,19 @@ let audioRoutingState = {
   streams: [],
 };
 
+let audioRoutingBusy = false;
+let audioRoutingInteracting = false;
+
+function normalizePercentage(value) {
+  const percentage = Number(value);
+
+  if (!Number.isFinite(percentage)) {
+    return 0;
+  }
+
+  return Math.min(100, Math.max(0, Math.round(percentage)));
+}
+
 function setConnection(online) {
   connection.textContent = online ? "Conectado" : "Sin conexión";
   connection.classList.toggle("online", online);
@@ -43,6 +56,7 @@ function render(state) {
 }
 
 function setAudioRoutingBusy(busy) {
+  audioRoutingBusy = busy;
   const disabled = busy || audioRoutingState.outputs.length === 0;
 
   audioOutput.disabled = disabled;
@@ -73,6 +87,7 @@ function renderOutputOptions(selectedName) {
 }
 
 function renderStream(stream) {
+  const streamVolume = normalizePercentage(stream.volume);
   const item = document.createElement("article");
   item.className = "stream";
 
@@ -96,8 +111,8 @@ function renderStream(stream) {
   volumeHeading.textContent = "Volumen";
 
   const volumeValue = document.createElement("output");
-  volumeValue.value = `${stream.volume}%`;
-  volumeValue.textContent = `${stream.volume}%`;
+  volumeValue.value = `${streamVolume}%`;
+  volumeValue.textContent = `${streamVolume}%`;
 
   const volumeLabel = document.createElement("span");
   volumeLabel.className = "stream-volume-label";
@@ -108,14 +123,27 @@ function renderStream(stream) {
   volume.min = "0";
   volume.max = "100";
   volume.step = "1";
-  volume.value = String(stream.volume);
+  volume.value = String(streamVolume);
   volume.setAttribute("aria-label", `Volumen de ${stream.application}`);
+  volume.addEventListener("pointerdown", () => {
+    audioRoutingInteracting = true;
+  });
+  volume.addEventListener("pointerup", () => {
+    audioRoutingInteracting = false;
+  });
+  volume.addEventListener("pointercancel", () => {
+    audioRoutingInteracting = false;
+  });
   volume.addEventListener("input", () => {
     volumeValue.value = `${volume.value}%`;
     volumeValue.textContent = `${volume.value}%`;
   });
   volume.addEventListener("change", () => {
-    setStreamVolume(stream.index, Number(volume.value));
+    audioRoutingInteracting = false;
+    setStreamVolume(
+      stream.index,
+      normalizePercentage(volume.value),
+    );
   });
 
   volumeControl.append(volumeLabel, volume);
@@ -198,6 +226,10 @@ async function requestState() {
 }
 
 async function requestAudioRouting() {
+  if (audioRoutingBusy || audioRoutingInteracting) {
+    return;
+  }
+
   try {
     const response = await fetch("/api/audio-routing", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -250,6 +282,7 @@ async function sendAudioRoutingAction(path, body) {
   } catch (error) {
     console.error("No se pudo cambiar el ruteo de audio", error);
     audioRoutingStatus.textContent = "No se pudo aplicar el cambio";
+    setAudioRoutingBusy(false);
     await requestAudioRouting();
   } finally {
     setAudioRoutingBusy(false);

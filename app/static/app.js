@@ -7,6 +7,12 @@ const playButton = document.querySelector("#play-button");
 const brightnessValues = document.querySelector("#brightness-values");
 const actionButtons = [...document.querySelectorAll("button[data-endpoint]")];
 
+const playbackLabels = {
+  playing: "Reproduciendo",
+  paused: "Pausado",
+  stopped: "Detenido",
+};
+
 function setConnection(online) {
   connection.textContent = online ? "Conectado" : "Sin conexión";
   connection.classList.toggle("online", online);
@@ -16,7 +22,8 @@ function render(state) {
   volumeValue.textContent = `${state.volume}%`;
   muteButton.textContent = state.muted ? "Activar sonido" : "Silenciar";
   track.textContent = state.current_track;
-  playbackState.textContent = state.playing ? "Reproduciendo" : "Detenido";
+  playbackState.textContent =
+    playbackLabels[state.playback_status] ?? "Detenido";
   playButton.textContent = state.playing ? "Pausar" : "Reproducir";
 
   const display1 = state.brightness.display_1;

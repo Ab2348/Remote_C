@@ -15,9 +15,6 @@ select {
 button {
   padding: 0.68rem 0.85rem;
   background: var(--control-background);
-  box-shadow: var(--control-shadow);
-  backdrop-filter: blur(var(--control-blur)) saturate(125%);
-  -webkit-backdrop-filter: blur(var(--control-blur)) saturate(125%);
   font-weight: 680;
   letter-spacing: -0.01em;
   cursor: pointer;
@@ -107,13 +104,13 @@ input[type="range"] {
 }
 
 .primary-control {
-  border-color: rgba(255, 255, 255, 0.34);
-  background: var(--primary-control-background);
-  box-shadow: var(--control-shadow);
+  border-color: rgba(71, 130, 255, 0.5);
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  box-shadow: 0 9px 22px rgba(17, 88, 231, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .primary-control:active {
-  background: var(--primary-control-pressed);
+  background: var(--accent-pressed);
 }
 
 @media (hover: hover) {
@@ -122,7 +119,7 @@ input[type="range"] {
   }
 
   .primary-control:hover {
-    border-color: rgba(255, 255, 255, 0.52);
+    border-color: rgba(126, 166, 255, 0.72);
   }
 }
 

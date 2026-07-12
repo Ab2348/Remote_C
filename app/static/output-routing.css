@@ -16,9 +16,9 @@
 }
 
 .output-device.is-selected {
-  border-color: rgba(255, 255, 255, 0.46);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.24), rgba(205, 210, 218, 0.1));
-  box-shadow: var(--control-shadow);
+  border-color: rgba(83, 139, 255, 0.58);
+  background: linear-gradient(145deg, rgba(30, 67, 132, 0.62), rgba(12, 28, 54, 0.64));
+  box-shadow: inset 0 0 0 1px rgba(70, 129, 255, 0.12);
 }
 
 .output-device-icon {
@@ -26,10 +26,10 @@
   width: 2.55rem;
   height: 2.55rem;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(80, 137, 255, 0.28);
   border-radius: 0.72rem;
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.82);
+  background: rgba(36, 117, 255, 0.13);
+  color: #7da9ff;
   font-size: 0.88rem;
   font-weight: 780;
 }
@@ -73,7 +73,7 @@
 }
 
 .output-routing-actions .primary-control {
-  box-shadow: var(--control-shadow);
+  box-shadow: 0 8px 18px rgba(17, 88, 231, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .output-routing-hint {

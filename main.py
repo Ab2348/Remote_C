@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.api import router
+from app.api.volume_routes import router as volume_router
 from app.services.monitors import system_event_monitors
 
 
@@ -30,6 +31,7 @@ app = FastAPI(
 )
 
 app.include_router(router)
+app.include_router(volume_router)
 
 
 @app.get("/health")

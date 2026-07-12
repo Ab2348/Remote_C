@@ -30,6 +30,9 @@ let audioRoutingBusy = false;
 let audioRoutingInteracting = false;
 let mediaSessionsBusy = false;
 let stateRequestInFlight = false;
+let systemState = null;
+let eventSource = null;
+let pendingAudioRoutingState = null;
 
 function normalizePercentage(value) {
   const percentage = Number(value);
@@ -47,6 +50,7 @@ function setConnection(online) {
 }
 
 function render(state) {
+  systemState = state;
   volumeValue.textContent = `${state.volume}%`;
   muteButton.textContent = state.muted ? "Activar sonido" : "Silenciar";
   track.textContent = state.current_track;
@@ -171,6 +175,27 @@ function setAudioRoutingBusy(busy) {
   audioStreams
     .querySelectorAll("select, button, input")
     .forEach((control) => { control.disabled = disabled; });
+
+  applyPendingAudioRouting();
+}
+
+function applyPendingAudioRouting() {
+  if (
+    audioRoutingBusy
+    || audioRoutingInteracting
+    || pendingAudioRoutingState === null
+  ) {
+    return;
+  }
+
+  const state = pendingAudioRoutingState;
+  pendingAudioRoutingState = null;
+  renderAudioRouting(state);
+}
+
+function finishAudioRoutingInteraction() {
+  audioRoutingInteracting = false;
+  window.setTimeout(applyPendingAudioRouting, 0);
 }
 
 function renderOutputOptions(selectedName) {
@@ -235,22 +260,16 @@ function renderStream(stream) {
   volume.addEventListener("pointerdown", () => {
     audioRoutingInteracting = true;
   });
-  volume.addEventListener("pointerup", () => {
-    audioRoutingInteracting = false;
-  });
-  volume.addEventListener("pointercancel", () => {
-    audioRoutingInteracting = false;
-  });
+  volume.addEventListener("pointerup", finishAudioRoutingInteraction);
+  volume.addEventListener("pointercancel", finishAudioRoutingInteraction);
   volume.addEventListener("input", () => {
     volumeValue.value = `${volume.value}%`;
     volumeValue.textContent = `${volume.value}%`;
   });
   volume.addEventListener("change", () => {
+    const value = normalizePercentage(volume.value);
     audioRoutingInteracting = false;
-    setStreamVolume(
-      stream.index,
-      normalizePercentage(volume.value),
-    );
+    setStreamVolume(stream.index, value);
   });
 
   volumeControl.append(volumeLabel, volume);
@@ -318,6 +337,82 @@ function renderAudioRouting(state) {
   }
 
   setAudioRoutingBusy(false);
+}
+
+
+function applyStatePatch(patch) {
+  if (systemState === null) {
+    requestState();
+    return;
+  }
+
+  render({ ...systemState, ...patch });
+}
+
+function parseEvent(event, label) {
+  try {
+    return JSON.parse(event.data);
+  } catch (error) {
+    console.error(`Evento inválido: ${label}`, error);
+    return null;
+  }
+}
+
+function connectEvents() {
+  eventSource?.close();
+  eventSource = new EventSource("/api/events");
+
+  eventSource.addEventListener("snapshot", (event) => {
+    const snapshot = parseEvent(event, "snapshot");
+    if (snapshot === null) return;
+
+    render(snapshot.state);
+
+    if (audioRoutingBusy || audioRoutingInteracting) {
+      pendingAudioRoutingState = snapshot.audio_routing;
+    } else {
+      renderAudioRouting(snapshot.audio_routing);
+    }
+
+    setConnection(true);
+  });
+
+  ["volume", "media", "brightness"].forEach((eventType) => {
+    eventSource.addEventListener(eventType, (event) => {
+      const patch = parseEvent(event, eventType);
+      if (patch !== null) {
+        applyStatePatch(patch);
+        setConnection(true);
+      }
+    });
+  });
+
+  eventSource.addEventListener("audio-routing", (event) => {
+    const state = parseEvent(event, "audio-routing");
+    if (state === null) return;
+
+    if (audioRoutingBusy || audioRoutingInteracting) {
+      pendingAudioRoutingState = state;
+    } else {
+      renderAudioRouting(state);
+    }
+
+    setConnection(true);
+  });
+
+  eventSource.addEventListener("server-error", (event) => {
+    const error = parseEvent(event, "server-error");
+    console.error("El servidor no pudo preparar el estado", error);
+    setConnection(false);
+  });
+
+  eventSource.onopen = () => {
+    setConnection(true);
+  };
+
+  eventSource.onerror = () => {
+    setConnection(false);
+  };
 }
 
 async function requestState() {
@@ -470,10 +565,14 @@ forceOutputButton.addEventListener("click", () => {
   sendAudioRoutingAction("force", { name: selectedAudioOutput() });
 });
 
-requestState();
-requestAudioRouting();
-window.setInterval(requestState, 3000);
-window.setInterval(requestAudioRouting, 5000);
+if ("EventSource" in window) {
+  connectEvents();
+} else {
+  requestState();
+  requestAudioRouting();
+  window.setInterval(requestState, 10000);
+  window.setInterval(requestAudioRouting, 10000);
+}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

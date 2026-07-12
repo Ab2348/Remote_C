@@ -1,4 +1,4 @@
-const CACHE_NAME = "remote-c-v5";
+const CACHE_NAME = "remote-c-v6";
 const APP_SHELL = [
   "/",
   "/styles.css",

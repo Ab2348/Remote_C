@@ -60,6 +60,15 @@ class StreamOutputRequest(OutputRequest):
     stream_index: int = Field(ge=0)
 
 
+class StreamVolumeRequest(BaseModel):
+    stream_index: int = Field(ge=0)
+    volume: int = Field(ge=0, le=100)
+
+
+class StreamMuteRequest(BaseModel):
+    stream_index: int = Field(ge=0)
+
+
 @router.get("/state")
 def get_state() -> dict:
     try:
@@ -123,5 +132,24 @@ def move_audio_stream(request: StreamOutputRequest) -> dict:
             request.stream_index,
             request.name,
         )
+    except AudioRoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.post("/audio-routing/stream/volume")
+def set_stream_volume(request: StreamVolumeRequest) -> dict:
+    try:
+        return audio_routing.set_stream_volume(
+            request.stream_index,
+            request.volume,
+        )
+    except AudioRoutingError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.post("/audio-routing/stream/mute")
+def toggle_stream_mute(request: StreamMuteRequest) -> dict:
+    try:
+        return audio_routing.toggle_stream_mute(request.stream_index)
     except AudioRoutingError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error

@@ -25,6 +25,8 @@ class AudioStream:
     media: str
     binary: str
     pid: str
+    volume: int
+    muted: bool
 
 
 class PactlAudioRoutingService:
@@ -50,6 +52,8 @@ class PactlAudioRoutingService:
                     "media": stream.media,
                     "binary": stream.binary,
                     "pid": stream.pid,
+                    "volume": stream.volume,
+                    "muted": stream.muted,
                     "output_name": (
                         sink_by_index[stream.sink].name
                         if stream.sink in sink_by_index
@@ -98,12 +102,7 @@ class PactlAudioRoutingService:
 
     def move_stream(self, stream_index: int, output_name: str) -> dict:
         sink = self._find_sink(output_name)
-        streams = self._get_streams()
-
-        if not any(stream.index == stream_index for stream in streams):
-            raise AudioRoutingError(
-                "El flujo seleccionado ya no está disponible"
-            )
+        self._find_stream(stream_index)
 
         self._run(
             "move-sink-input",
@@ -112,6 +111,46 @@ class PactlAudioRoutingService:
         )
 
         return self.get_state()
+
+    def set_stream_volume(
+        self,
+        stream_index: int,
+        volume: int,
+    ) -> dict:
+        self._find_stream(stream_index)
+
+        if not 0 <= volume <= 100:
+            raise AudioRoutingError(
+                "El volumen debe estar entre 0 y 100"
+            )
+
+        self._run(
+            "set-sink-input-volume",
+            str(stream_index),
+            f"{volume}%",
+        )
+
+        return self.get_state()
+
+    def toggle_stream_mute(self, stream_index: int) -> dict:
+        self._find_stream(stream_index)
+
+        self._run(
+            "set-sink-input-mute",
+            str(stream_index),
+            "toggle",
+        )
+
+        return self.get_state()
+
+    def _find_stream(self, stream_index: int) -> AudioStream:
+        for stream in self._get_streams():
+            if stream.index == stream_index:
+                return stream
+
+        raise AudioRoutingError(
+            "El flujo seleccionado ya no está disponible"
+        )
 
     def _find_sink(self, output_name: str) -> AudioSink:
         for sink in self._get_sinks():
@@ -161,6 +200,22 @@ class PactlAudioRoutingService:
 
         for item in data:
             properties = item.get("properties") or {}
+            volume_data = item.get("volume") or {}
+            channel_values = [
+                int(channel["value"])
+                for channel in volume_data.values()
+                if isinstance(channel, dict) and "value" in channel
+            ]
+            volume = (
+                round(
+                    sum(channel_values)
+                    / len(channel_values)
+                    / 65536
+                    * 100
+                )
+                if channel_values
+                else 0
+            )
 
             streams.append(
                 AudioStream(
@@ -178,6 +233,8 @@ class PactlAudioRoutingService:
                     pid=str(
                         properties.get("application.process.id") or ""
                     ),
+                    volume=volume,
+                    muted=bool(item.get("mute", False)),
                 )
             )
 

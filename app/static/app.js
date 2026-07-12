@@ -48,7 +48,7 @@ function setAudioRoutingBusy(busy) {
   audioOutput.disabled = disabled;
   audioRoutingButtons.forEach((button) => { button.disabled = disabled; });
   audioStreams
-    .querySelectorAll("select, button")
+    .querySelectorAll("select, button, input")
     .forEach((control) => { control.disabled = disabled; });
 }
 
@@ -89,6 +89,49 @@ function renderStream(stream) {
   const controls = document.createElement("div");
   controls.className = "stream-controls";
 
+  const volumeControl = document.createElement("label");
+  volumeControl.className = "stream-volume";
+
+  const volumeHeading = document.createElement("span");
+  volumeHeading.textContent = "Volumen";
+
+  const volumeValue = document.createElement("output");
+  volumeValue.value = `${stream.volume}%`;
+  volumeValue.textContent = `${stream.volume}%`;
+
+  const volumeLabel = document.createElement("span");
+  volumeLabel.className = "stream-volume-label";
+  volumeLabel.append(volumeHeading, volumeValue);
+
+  const volume = document.createElement("input");
+  volume.type = "range";
+  volume.min = "0";
+  volume.max = "100";
+  volume.step = "1";
+  volume.value = String(stream.volume);
+  volume.setAttribute("aria-label", `Volumen de ${stream.application}`);
+  volume.addEventListener("input", () => {
+    volumeValue.value = `${volume.value}%`;
+    volumeValue.textContent = `${volume.value}%`;
+  });
+  volume.addEventListener("change", () => {
+    setStreamVolume(stream.index, Number(volume.value));
+  });
+
+  volumeControl.append(volumeLabel, volume);
+
+  const muteButton = document.createElement("button");
+  muteButton.type = "button";
+  muteButton.className = "stream-mute";
+  muteButton.textContent = stream.muted ? "Activar sonido" : "Silenciar";
+  muteButton.setAttribute("aria-pressed", String(stream.muted));
+  muteButton.addEventListener("click", () => {
+    toggleStreamMute(stream.index);
+  });
+
+  const routingControls = document.createElement("div");
+  routingControls.className = "stream-routing";
+
   const select = document.createElement("select");
   select.setAttribute("aria-label", `Salida para ${stream.application}`);
 
@@ -110,7 +153,8 @@ function renderStream(stream) {
     moveStream(stream.index, select.value);
   });
 
-  controls.append(select, button);
+  routingControls.append(select, button);
+  controls.append(volumeControl, muteButton, routingControls);
   item.append(content, controls);
 
   return item;
@@ -220,6 +264,19 @@ function moveStream(streamIndex, outputName) {
   return sendAudioRoutingAction("stream", {
     stream_index: streamIndex,
     name: outputName,
+  });
+}
+
+function setStreamVolume(streamIndex, volume) {
+  return sendAudioRoutingAction("stream/volume", {
+    stream_index: streamIndex,
+    volume,
+  });
+}
+
+function toggleStreamMute(streamIndex) {
+  return sendAudioRoutingAction("stream/mute", {
+    stream_index: streamIndex,
   });
 }
 

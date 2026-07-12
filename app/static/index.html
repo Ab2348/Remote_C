@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#111827" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Remote C</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="remote">
+      <header class="header">
+        <div>
+          <h1>Remote C</h1>
+          <p>Control del equipo</p>
+        </div>
+        <span id="connection" class="status" aria-live="polite">Conectando</span>
+      </header>
+
+      <section class="panel" aria-labelledby="volume-title">
+        <div class="panel-heading">
+          <h2 id="volume-title">Volumen</h2>
+          <output id="volume-value">--%</output>
+        </div>
+        <div class="controls controls-three">
+          <button type="button" data-endpoint="volume" data-action="down" aria-label="Bajar volumen">−</button>
+          <button id="mute-button" type="button" data-endpoint="volume" data-action="mute">Silenciar</button>
+          <button type="button" data-endpoint="volume" data-action="up" aria-label="Subir volumen">+</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="media-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="media-title">Multimedia</h2>
+            <p id="track">Sin reproducción</p>
+          </div>
+          <output id="playback-state">Detenido</output>
+        </div>
+        <div class="controls controls-three">
+          <button type="button" data-endpoint="media" data-action="previous" aria-label="Pista anterior">Anterior</button>
+          <button id="play-button" type="button" data-endpoint="media" data-action="play_pause">Reproducir</button>
+          <button type="button" data-endpoint="media" data-action="next" aria-label="Pista siguiente">Siguiente</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="brightness-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="brightness-title">Brillo</h2>
+            <p id="brightness-values">Monitor 1: --% · Monitor 2: --%</p>
+          </div>
+        </div>
+        <div class="controls controls-two">
+          <button type="button" data-endpoint="brightness" data-action="down">− 10%</button>
+          <button type="button" data-endpoint="brightness" data-action="up">+ 10%</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -96,13 +96,30 @@ function renderMediaSession(player) {
   const controls = document.createElement("div");
   controls.className = "media-session-controls";
 
-  const actions = [
-    ["previous", "Anterior"],
-    ["seek_backward", "−10 s"],
-    ["play_pause", player.playing ? "Pausar" : "Reproducir"],
-    ["seek_forward", "+10 s"],
-    ["next", "Siguiente"],
-  ];
+  const actions = [];
+
+  if (player.can_previous) {
+    actions.push(["previous", "Anterior"]);
+  }
+
+  if (player.can_seek) {
+    actions.push(["seek_backward", "−10 s"]);
+  }
+
+  if (player.can_play_pause) {
+    actions.push([
+      "play_pause",
+      player.playing ? "Pausar" : "Reproducir",
+    ]);
+  }
+
+  if (player.can_seek) {
+    actions.push(["seek_forward", "+10 s"]);
+  }
+
+  if (player.can_next) {
+    actions.push(["next", "Siguiente"]);
+  }
 
   actions.forEach(([action, label]) => {
     const button = document.createElement("button");
@@ -114,7 +131,12 @@ function renderMediaSession(player) {
     controls.append(button);
   });
 
-  item.append(heading, controls);
+  item.append(heading);
+
+  if (actions.length > 0) {
+    item.append(controls);
+  }
+
   return item;
 }
 
@@ -346,8 +368,10 @@ async function sendMediaSessionAction(player, action) {
     );
     navigator.vibrate?.(20);
   } catch (error) {
-    console.error("No se pudo controlar el reproductor", error);
-    mediaSessionsStatus.textContent = "No se pudo aplicar la acción";
+    console.warn(
+      "La capacidad del reproductor cambió; actualizando estado",
+      error,
+    );
     mediaSessionsBusy = false;
     await requestState();
   } finally {

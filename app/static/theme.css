@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-  background: #050b16;
+  background: #fcfcfc;
   color: #f7f9fc;
 
   /* Palette */
@@ -23,8 +23,8 @@
   --body-background:
     radial-gradient(circle at 50% -12rem, rgba(31, 91, 217, 0.16), transparent 34rem),
     linear-gradient(180deg, #050a14 0%, #07101e 52%, #050b16 100%);
-  --wallpaper-scrim:
-    radial-gradient(circle at 50% -8rem, rgba(24, 79, 183, 0.12), transparent 32rem),
+  /*--wallpaper-scrim:
+    radial-gradient(circle at 50% -8rem, rgba(154, 170, 199, 0.12), transparent 32rem),
     linear-gradient(180deg, rgba(3, 8, 16, 0.5), rgba(3, 8, 16, 0.7) 58%, rgba(3, 8, 16, 0.8));
   --ambient-top: #1c67ff;
   --ambient-bottom: #174caa;
@@ -38,8 +38,8 @@
   --glass-reflection:
     linear-gradient(115deg, rgba(255, 255, 255, 0.07), transparent 30%),
     radial-gradient(circle at 88% 4%, rgba(100, 151, 255, 0.07), transparent 32%);
-  --glass-blur: 22px;
-  --glass-saturation: 135%;
+  --glass-blur: 8px;
+  --glass-saturation: 150%;
   --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
   --glass-shadow:
     0 20px 52px rgba(0, 0, 0, 0.32),

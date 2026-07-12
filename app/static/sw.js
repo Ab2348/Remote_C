@@ -1,4 +1,4 @@
-const CACHE_NAME = "remote-c-v11-volume-control";
+const CACHE_NAME = "remote-c-v12-volume-fix";
 const APP_SHELL = [
   "/",
   "/styles.css",

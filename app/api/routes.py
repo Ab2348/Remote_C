@@ -25,12 +25,6 @@ EVENT_ERRORS = (*CONTROL_ERRORS, AudioRoutingError)
 router = APIRouter(prefix="/api")
 
 
-class VolumeAction(StrEnum):
-    UP = "up"
-    DOWN = "down"
-    MUTE = "mute"
-
-
 class MediaAction(StrEnum):
     PLAY_PAUSE = "play_pause"
     PREVIOUS = "previous"
@@ -48,10 +42,6 @@ class MediaSessionAction(StrEnum):
 class BrightnessAction(StrEnum):
     UP = "up"
     DOWN = "down"
-
-
-class VolumeRequest(BaseModel):
-    action: VolumeAction
 
 
 class MediaRequest(BaseModel):
@@ -87,29 +77,6 @@ class StreamMuteRequest(BaseModel):
 def _sse_event(event_type: str, payload: dict) -> str:
     data = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     return f"event: {event_type}\ndata: {data}\n\n"
-
-
-def _volume_payload(state: dict) -> dict:
-    return {
-        "volume": state["volume"],
-        "muted": state["muted"],
-    }
-
-
-def _media_payload(state: dict) -> dict:
-    return {
-        key: state[key]
-        for key in (
-            "playing",
-            "playback_status",
-            "current_track",
-            "media_sessions",
-        )
-    }
-
-
-def _brightness_payload(state: dict) -> dict:
-    return {"brightness": state["brightness"]}
 
 
 @router.get("/events")
@@ -162,19 +129,6 @@ def get_state() -> dict:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
 
-@router.post("/volume")
-async def control_volume(request: VolumeRequest) -> dict:
-    try:
-        state = await asyncio.to_thread(
-            controller.change_volume,
-            request.action,
-        )
-        await event_hub.publish("volume", _volume_payload(state))
-        return state
-    except CONTROL_ERRORS as error:
-        raise HTTPException(status_code=503, detail=str(error)) from error
-
-
 @router.post("/media")
 async def control_media(request: MediaRequest) -> dict:
     try:
@@ -182,9 +136,9 @@ async def control_media(request: MediaRequest) -> dict:
             controller.control_media,
             request.action,
         )
-        await event_hub.publish("media", _media_payload(state))
+        await event_hub.publish("media", state)
         return state
-    except CONTROL_ERRORS as error:
+    except MediaControlError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
 
@@ -218,9 +172,9 @@ async def control_brightness(request: BrightnessRequest) -> dict:
             controller.change_brightness,
             request.action,
         )
-        await event_hub.publish("brightness", _brightness_payload(state))
+        await event_hub.publish("brightness", state)
         return state
-    except CONTROL_ERRORS as error:
+    except BrightnessControlError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
 

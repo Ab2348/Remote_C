@@ -71,11 +71,12 @@
               max="100"
               step="1"
               value="0"
-              aria-describedby="volume-value"
+              aria-describedby="volume-display"
             />
           </label>
 
-          <output id="volume-value" class="volume-percentage" for="volume-slider">--%</output>
+          <output id="volume-value" class="sr-only" aria-hidden="true">--%</output>
+          <output id="volume-display" class="volume-percentage" for="volume-slider">--%</output>
 
           <button
             id="mute-button"

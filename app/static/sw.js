@@ -1,8 +1,10 @@
-const CACHE_NAME = "remote-c-v10-ui-shell";
+const CACHE_NAME = "remote-c-v11-volume-control";
 const APP_SHELL = [
   "/",
   "/styles.css",
+  "/volume.css",
   "/app.js",
+  "/volume.js",
   "/manifest.webmanifest",
   "/icon.svg",
 ];

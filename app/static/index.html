@@ -13,9 +13,9 @@
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/volume.css" />
     <link rel="stylesheet" href="/now-playing.css" />
-    <script src="/app.js" defer></script>
     <script src="/volume.js" defer></script>
     <script src="/now-playing.js" defer></script>
+    <script src="/app.js" defer></script>
   </head>
   <body>
     <div class="ambient ambient-top" aria-hidden="true"></div>
@@ -77,23 +77,21 @@
             />
           </label>
 
-          <output id="volume-value" class="sr-only" aria-hidden="true">--%</output>
           <output id="volume-display" class="volume-percentage" for="volume-slider">--%</output>
 
           <button
             id="mute-button"
             class="volume-mute-button"
             type="button"
-            data-endpoint="volume"
-            data-action="mute"
+            data-volume-action="mute"
             aria-pressed="false"
             title="Silenciar"
           >Silenciar</button>
         </div>
 
         <div class="controls controls-two segmented-controls volume-step-controls">
-          <button type="button" data-endpoint="volume" data-action="down" aria-label="Bajar volumen">−</button>
-          <button type="button" data-endpoint="volume" data-action="up" aria-label="Subir volumen">+</button>
+          <button type="button" data-volume-action="down" aria-label="Bajar volumen">−</button>
+          <button type="button" data-volume-action="up" aria-label="Subir volumen">+</button>
         </div>
       </section>
 
@@ -109,8 +107,6 @@
           </div>
           <output id="playback-state" class="panel-chip" data-state="stopped">Detenido</output>
         </div>
-
-        <p id="track" class="sr-only" aria-hidden="true">Sin reproducción</p>
 
         <div class="now-playing">
           <div class="cover-placeholder" aria-hidden="true">

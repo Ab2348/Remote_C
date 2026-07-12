@@ -19,17 +19,26 @@ class RemoteController:
         brightness: dict | None = None,
     ) -> dict:
         state = self._simulated.get_state()
-        state.update(volume if volume is not None else self._volume.get_state())
-        state.update(media if media is not None else self._media.get_state())
+        state.update(volume if volume is not None else self.get_volume_state())
+        state.update(media if media is not None else self.get_media_state())
         state.update(
             brightness
             if brightness is not None
-            else self._brightness.get_state()
+            else self.get_brightness_state()
         )
         return state
 
     def get_state(self) -> dict:
         return self._compose_state()
+
+    def get_volume_state(self) -> dict:
+        return self._volume.get_state()
+
+    def get_media_state(self) -> dict:
+        return self._media.get_state()
+
+    def get_brightness_state(self) -> dict:
+        return self._brightness.get_state()
 
     def change_volume(self, action: str) -> dict:
         volume = self._volume.change(action)

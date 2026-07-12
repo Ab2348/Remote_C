@@ -1,7 +1,9 @@
 import asyncio
 import logging
 import os
+from collections.abc import Awaitable, Callable
 from contextlib import suppress
+from typing import Literal
 
 from app.services.audio_routing import AudioRoutingError, audio_routing
 from app.services.brightness import BrightnessControlError
@@ -13,6 +15,9 @@ from app.services.volume import VolumeControlError
 
 logger = logging.getLogger(__name__)
 
+RefreshKind = Literal["volume", "routing", "media"]
+Watcher = Callable[[], Awaitable[None]]
+
 
 class SystemEventMonitors:
     BRIGHTNESS_INTERVAL_SECONDS = 30
@@ -21,12 +26,16 @@ class SystemEventMonitors:
 
     def __init__(self) -> None:
         self._tasks: list[asyncio.Task] = []
-        self._pending_refreshes: dict[str, asyncio.Task] = {}
+        self._refresh_events: dict[RefreshKind, asyncio.Event] = {}
 
     async def start(self) -> None:
         if self._tasks:
             return
 
+        self._refresh_events = {
+            kind: asyncio.Event()
+            for kind in ("volume", "routing", "media")
+        }
         self._tasks = [
             asyncio.create_task(
                 self._supervise("pactl", self._watch_pipewire),
@@ -40,21 +49,24 @@ class SystemEventMonitors:
                 self._watch_brightness(),
                 name="remote-c-brightness-monitor",
             ),
+            *(
+                asyncio.create_task(
+                    self._refresh_worker(kind),
+                    name=f"remote-c-{kind}-refresh",
+                )
+                for kind in self._refresh_events
+            ),
         ]
 
     async def stop(self) -> None:
-        for task in (*self._tasks, *self._pending_refreshes.values()):
+        for task in self._tasks:
             task.cancel()
 
-        await asyncio.gather(
-            *self._tasks,
-            *self._pending_refreshes.values(),
-            return_exceptions=True,
-        )
+        await asyncio.gather(*self._tasks, return_exceptions=True)
         self._tasks.clear()
-        self._pending_refreshes.clear()
+        self._refresh_events.clear()
 
-    async def _supervise(self, name: str, watcher) -> None:
+    async def _supervise(self, name: str, watcher: Watcher) -> None:
         while True:
             try:
                 await watcher()
@@ -82,16 +94,34 @@ class SystemEventMonitors:
                 if not event_hub.has_subscribers:
                     continue
 
-                line = raw_line.decode(errors="replace").lower()
-                if any(
-                    subject in line
-                    for subject in ("sink", "server", "card", "client")
-                ):
-                    self._schedule_refresh("pipewire")
+                line = raw_line.decode(errors="replace")
+                for kind in self._classify_pactl_event(line):
+                    self._schedule_refresh(kind)
 
             await process.wait()
         finally:
             await self._terminate(process)
+
+    @staticmethod
+    def _classify_pactl_event(line: str) -> tuple[RefreshKind, ...]:
+        normalized = line.casefold()
+
+        if " on sink-input " in normalized:
+            return ("routing",)
+
+        if " on sink " in normalized:
+            if "event 'change'" in normalized:
+                return ("volume",)
+
+            return ("volume", "routing")
+
+        if " on server " in normalized:
+            return ("volume", "routing")
+
+        if " on card " in normalized:
+            return ("routing",)
+
+        return ()
 
     async def _watch_media(self) -> None:
         process = await asyncio.create_subprocess_exec(
@@ -128,44 +158,41 @@ class SystemEventMonitors:
             except BrightnessControlError:
                 logger.exception("No se pudo actualizar el brillo")
 
-    def _schedule_refresh(self, kind: str) -> None:
-        current = self._pending_refreshes.get(kind)
-        if current is not None:
-            current.cancel()
+    def _schedule_refresh(self, kind: RefreshKind) -> None:
+        self._refresh_events[kind].set()
 
-        task = asyncio.create_task(self._publish_after_delay(kind))
-        self._pending_refreshes[kind] = task
+    async def _refresh_worker(self, kind: RefreshKind) -> None:
+        event = self._refresh_events[kind]
 
-        def clear(completed: asyncio.Task) -> None:
-            if self._pending_refreshes.get(kind) is completed:
-                self._pending_refreshes.pop(kind, None)
+        while True:
+            await event.wait()
+            event.clear()
+            await asyncio.sleep(self.DEBOUNCE_SECONDS)
 
-        task.add_done_callback(clear)
+            while event.is_set():
+                event.clear()
+                await asyncio.sleep(self.DEBOUNCE_SECONDS)
 
-    async def _publish_after_delay(self, kind: str) -> None:
-        await asyncio.sleep(self.DEBOUNCE_SECONDS)
+            if event_hub.has_subscribers:
+                await self._publish_refresh(kind)
 
-        if not event_hub.has_subscribers:
-            return
-
+    async def _publish_refresh(self, kind: RefreshKind) -> None:
         try:
-            if kind == "media":
+            if kind == "volume":
+                state = await asyncio.to_thread(controller.get_volume_state)
+                await event_hub.publish("volume", state)
+            elif kind == "routing":
+                state = await asyncio.to_thread(audio_routing.get_state)
+                await event_hub.publish("audio-routing", state)
+            else:
                 state = await asyncio.to_thread(controller.get_media_state)
                 await event_hub.publish("media", state)
-                return
-
-            volume_state, routing_state = await asyncio.gather(
-                asyncio.to_thread(controller.get_volume_state),
-                asyncio.to_thread(audio_routing.get_state),
-            )
-            await event_hub.publish("volume", volume_state)
-            await event_hub.publish("audio-routing", routing_state)
-        except (
-            AudioRoutingError,
-            MediaControlError,
-            VolumeControlError,
-        ):
-            logger.exception("No se pudo publicar el cambio de %s", kind)
+        except VolumeControlError:
+            logger.exception("No se pudo publicar el cambio de volumen")
+        except AudioRoutingError:
+            logger.exception("No se pudo publicar el cambio de ruteo")
+        except MediaControlError:
+            logger.exception("No se pudo publicar el cambio multimedia")
 
     @staticmethod
     async def _terminate(process: asyncio.subprocess.Process) -> None:

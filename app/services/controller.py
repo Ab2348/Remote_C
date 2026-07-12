@@ -43,5 +43,15 @@ class RemoteController:
         brightness = self._brightness.change(action)
         return self._compose_state(brightness=brightness)
 
+    def get_media_sessions(self) -> dict:
+        return self._media.get_sessions()
+
+    def control_media_session(
+        self,
+        player_name: str,
+        action: str,
+    ) -> dict:
+        return self._media.control_session(player_name, action)
+
 
 controller = RemoteController()

@@ -17,7 +17,7 @@ class WallpaperAsset:
 
 class HydeWallpaperService:
     MAX_FILE_SIZE = 20 * 1024 * 1024
-    CANDIDATES = ("wall.thmb", "wall.set")
+    CANDIDATES = ("wall.set", "wall.thmb")
 
     def __init__(self, cache_dir: Path | None = None) -> None:
         cache_home = Path(

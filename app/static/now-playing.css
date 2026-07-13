@@ -1,7 +1,5 @@
 .now-playing-panel {
-  background:
-    radial-gradient(circle at 92% 6%, var(--panel-accent-glow), transparent 12rem),
-    var(--glass-panel);
+  background: transparent;
 }
 
 .now-playing-indicator {

@@ -6,10 +6,10 @@
 
   /* Palette */
   --background: #050b16;
-  --surface: rgba(37, 40, 47, 0.72);
-  --surface-strong: rgba(30, 33, 40, 0.76);
-  --surface-soft: rgba(225, 230, 238, 0.12);
-  --surface-pressed: rgba(255, 255, 255, 0.17);
+  --surface: rgba(8, 10, 14, 0.24);
+  --surface-strong: rgba(6, 8, 12, 0.3);
+  --surface-soft: rgba(255, 255, 255, 0.03);
+  --surface-pressed: rgba(255, 255, 255, 0.075);
   --text: #f7f9fc;
   --muted: #98a6bc;
   --muted-strong: #c5cfde;
@@ -24,35 +24,35 @@
     radial-gradient(circle at 50% -12rem, rgba(31, 91, 217, 0.16), transparent 34rem),
     linear-gradient(180deg, #050a14 0%, #07101e 52%, #050b16 100%);
   --wallpaper-scrim:
-    radial-gradient(circle at 50% -8rem, rgba(255, 255, 255, 0.06), transparent 30rem),
-    linear-gradient(180deg, rgba(8, 9, 12, 0.22), rgba(8, 9, 12, 0.35) 58%, rgba(5, 6, 9, 0.5));
+    radial-gradient(circle at 50% -8rem, rgba(255, 255, 255, 0.018), transparent 30rem),
+    linear-gradient(180deg, rgba(3, 4, 7, 0.06), rgba(3, 4, 7, 0.12) 58%, rgba(2, 3, 6, 0.18));
   --ambient-top: #ffffff;
   --ambient-bottom: #aeb8c8;
-  --ambient-opacity: 0.045;
+  --ambient-opacity: 0.012;
 
   /* Glass */
-  --glass-panel: linear-gradient(145deg, rgba(238, 241, 247, 0.18), rgba(43, 47, 56, 0.24));
-  --glass-card: linear-gradient(145deg, rgba(244, 246, 250, 0.12), rgba(50, 54, 63, 0.19));
-  --glass-fallback: linear-gradient(150deg, rgba(49, 52, 61, 0.96), rgba(24, 27, 33, 0.94));
-  --glass-border: rgba(255, 255, 255, 0.23);
+  --glass-panel: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(8, 10, 14, 0.08));
+  --glass-card: linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(7, 9, 13, 0.065));
+  --glass-fallback: linear-gradient(150deg, rgba(20, 23, 29, 0.82), rgba(10, 12, 17, 0.78));
+  --glass-border: rgba(255, 255, 255, 0.09);
   --glass-reflection:
-    linear-gradient(120deg, rgba(255, 255, 255, 0.17), transparent 30%),
-    radial-gradient(circle at 88% 4%, rgba(255, 255, 255, 0.09), transparent 34%);
+    linear-gradient(120deg, rgba(255, 255, 255, 0.04), transparent 30%),
+    radial-gradient(circle at 88% 4%, rgba(255, 255, 255, 0.025), transparent 34%);
   --glass-blur: 28px;
-  --glass-saturation: 118%;
+  --glass-saturation: 135%;
   --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
   --glass-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.19),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.055);
-  --panel-accent-glow: rgba(255, 255, 255, 0.055);
-  --selected-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(54, 60, 72, 0.23));
+    0 18px 44px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.035);
+  --panel-accent-glow: rgba(255, 255, 255, 0.015);
+  --selected-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(12, 15, 20, 0.08));
 
   /* Borders and controls */
-  --border: rgba(255, 255, 255, 0.14);
-  --border-strong: rgba(255, 255, 255, 0.27);
-  --control-background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(48, 52, 61, 0.22));
-  --segmented-background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(43, 47, 56, 0.19));
+  --border: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.11);
+  --control-background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(10, 12, 17, 0.08));
+  --segmented-background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(8, 10, 14, 0.06));
   --focus-ring: rgba(36, 117, 255, 0.34);
 
   /* Brand and connection state */

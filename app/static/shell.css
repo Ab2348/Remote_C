@@ -29,9 +29,7 @@
 }
 
 .wallpaper-scrim {
-  position: absolute;
-  inset: 0;
-  background: var(--wallpaper-scrim);
+  display: none;
 }
 
 .ambient {

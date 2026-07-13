@@ -1,8 +1,49 @@
 const connection = document.querySelector("#connection");
+const transparencyToggle = document.querySelector("#transparency-toggle");
 const actionButtons = [...document.querySelectorAll("button[data-endpoint]")];
 let stateRequestInFlight = false;
 let systemState = null;
 let eventSource = null;
+
+const TRANSPARENCY_STORAGE_KEY = "remote-c:appearance";
+
+function readFullTransparencyPreference() {
+  try {
+    return window.localStorage.getItem(TRANSPARENCY_STORAGE_KEY) === "transparent";
+  } catch {
+    return false;
+  }
+}
+
+function renderTransparencyMode(fullTransparency) {
+  document.documentElement.classList.toggle("is-full-transparency", fullTransparency);
+  transparencyToggle?.setAttribute("aria-pressed", String(fullTransparency));
+
+  const label = fullTransparency
+    ? "Activar efecto Liquid Glass"
+    : "Activar transparencia total";
+  transparencyToggle?.setAttribute("aria-label", label);
+  transparencyToggle?.setAttribute("title", label);
+}
+
+function setFullTransparencyPreference(fullTransparency) {
+  renderTransparencyMode(fullTransparency);
+
+  try {
+    window.localStorage.setItem(
+      TRANSPARENCY_STORAGE_KEY,
+      fullTransparency ? "transparent" : "glass",
+    );
+  } catch {
+    // El modo sigue funcionando aunque el navegador bloquee el almacenamiento.
+  }
+}
+
+renderTransparencyMode(readFullTransparencyPreference());
+transparencyToggle?.addEventListener("click", () => {
+  const fullTransparency = !document.documentElement.classList.contains("is-full-transparency");
+  setFullTransparencyPreference(fullTransparency);
+});
 
 function setConnection(online) {
   connection.textContent = online ? "Conectado" : "Sin conexión";

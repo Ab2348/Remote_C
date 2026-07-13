@@ -11,10 +11,19 @@
   overflow: hidden;
   border: 1px solid var(--glass-border);
   border-radius: 1.35rem;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  background: var(--glass-panel);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation)) brightness(1.04);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation)) brightness(1.04);
+}
+
+.panel::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass-reflection);
+  content: "";
+  pointer-events: none;
 }
 
 .panel > * {
@@ -67,13 +76,13 @@
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .panel {
-    background: transparent;
+    background: var(--glass-fallback);
   }
 }
 
 @media (prefers-reduced-transparency: reduce) {
   .panel {
-    background: transparent;
+    background: var(--glass-fallback);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -83,4 +92,15 @@
   .panel {
     border-radius: 1.45rem;
   }
+}
+
+html.is-full-transparency .panel {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html.is-full-transparency .panel::after {
+  display: none;
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "remote-c-v23-neutral-glass";
+const CACHE_NAME = "remote-c-v24-transparency-toggle";
 const APP_SHELL = [
   "/",
   "/theme.css",

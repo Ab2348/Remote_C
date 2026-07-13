@@ -6,10 +6,10 @@
 
   /* Palette */
   --background: #050b16;
-  --surface: rgba(8, 10, 14, 0.24);
-  --surface-strong: rgba(6, 8, 12, 0.3);
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-strong: rgba(255, 255, 255, 0.055);
   --surface-soft: rgba(255, 255, 255, 0.03);
-  --surface-pressed: rgba(255, 255, 255, 0.075);
+  --surface-pressed: rgba(255, 255, 255, 0.085);
   --text: #f7f9fc;
   --muted: #98a6bc;
   --muted-strong: #c5cfde;
@@ -31,9 +31,9 @@
   --ambient-opacity: 0.012;
 
   /* Glass */
-  --glass-panel: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(8, 10, 14, 0.08));
-  --glass-card: linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(7, 9, 13, 0.065));
-  --glass-fallback: linear-gradient(150deg, rgba(20, 23, 29, 0.82), rgba(10, 12, 17, 0.78));
+  --glass-panel: linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018));
+  --glass-card: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012));
+  --glass-fallback: linear-gradient(150deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035));
   --glass-border: rgba(255, 255, 255, 0.09);
   --glass-reflection:
     linear-gradient(120deg, rgba(255, 255, 255, 0.04), transparent 30%),
@@ -42,17 +42,16 @@
   --glass-saturation: 135%;
   --shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
   --glass-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.13),
     inset 0 -1px 0 rgba(255, 255, 255, 0.035);
   --panel-accent-glow: rgba(255, 255, 255, 0.015);
-  --selected-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(12, 15, 20, 0.08));
+  --selected-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.018));
 
   /* Borders and controls */
   --border: rgba(255, 255, 255, 0.06);
   --border-strong: rgba(255, 255, 255, 0.11);
-  --control-background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(10, 12, 17, 0.08));
-  --segmented-background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(8, 10, 14, 0.06));
+  --control-background: linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.018));
+  --segmented-background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012));
   --focus-ring: rgba(36, 117, 255, 0.34);
 
   /* Brand and connection state */

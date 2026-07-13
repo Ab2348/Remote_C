@@ -120,14 +120,34 @@
   gap: 0.55rem;
 }
 
-.menu-glyph {
+.transparency-toggle {
   display: grid;
-  width: 1.55rem;
+  flex: 0 0 auto;
+  width: 2.5rem;
   height: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.52rem;
   place-items: center;
+  border-radius: 50%;
+  background: var(--control-background);
+  backdrop-filter: blur(14px) saturate(var(--glass-saturation)) brightness(1.04);
+  -webkit-backdrop-filter: blur(14px) saturate(var(--glass-saturation)) brightness(1.04);
   color: #aab6c9;
-  font-size: 1.65rem;
-  line-height: 1;
+}
+
+.transparency-toggle svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  transition: transform 180ms ease;
+}
+
+.transparency-toggle[aria-pressed="true"] {
+  border-color: rgba(126, 166, 255, 0.52);
+  color: #8db3ff;
+}
+
+.transparency-toggle[aria-pressed="true"] svg {
+  transform: rotate(180deg);
 }
 
 .status {
@@ -180,7 +200,4 @@
     padding-inline: 0.58rem;
   }
 
-  .menu-glyph {
-    display: none;
-  }
 }

@@ -60,6 +60,20 @@ for (const script of [
   window.eval(fs.readFileSync(`app/static/${script}`, "utf8"));
 }
 
+const transparencyToggle = window.document.querySelector("#transparency-toggle");
+if (!transparencyToggle) throw new Error("control de transparencia no disponible");
+transparencyToggle.click();
+if (!window.document.documentElement.classList.contains("is-full-transparency")) {
+  throw new Error("transparencia total no activada");
+}
+if (transparencyToggle.getAttribute("aria-pressed") !== "true") {
+  throw new Error("estado accesible de transparencia incorrecto");
+}
+transparencyToggle.click();
+if (window.document.documentElement.classList.contains("is-full-transparency")) {
+  throw new Error("Liquid Glass no restaurado");
+}
+
 EventSourceStub.instance.emit("snapshot", {
   state: {
     volume: 37,

@@ -79,6 +79,12 @@ Cuando la ventana funcione correctamente, integrar el módulo en el layout
 ./deploy/install-desktop-client.sh --integrate-waybar
 ```
 
+El instalador también crea
+`~/.config/hypr/userprefs.d/remote-c-client-persistent-size.conf`. La regla
+hace que Remote C se abra como ventana flotante y que Hyprland recuerde el
+último tamaño utilizado. En la primera apertura se usa el tamaño inicial de
+480×780 definido por el cliente; después puede redimensionarse normalmente.
+
 El configurador respalda `config.jsonc`, `layouts/carlos-clean.jsonc` y
 `user-style.css` antes de modificarlos. Para retirar también la integración de
 Waybar:

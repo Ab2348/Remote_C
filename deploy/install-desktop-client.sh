@@ -9,11 +9,13 @@ desktop_source="$project_dir/desktop/io.github.ab2348.RemoteC.desktop"
 icon_source="$project_dir/app/static/icon.svg"
 waybar_source="$project_dir/deploy/waybar/custom-remote-c.jsonc"
 waybar_configurator="$project_dir/deploy/configure-waybar.py"
+hypr_source="$project_dir/deploy/hypr/remote-c-client.conf"
 
 client_target="${XDG_BIN_HOME:-$HOME/.local/bin}/remote-c-client"
 desktop_target="${XDG_DATA_HOME:-$HOME/.local/share}/applications/io.github.ab2348.RemoteC.desktop"
 icon_target="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor/scalable/apps/io.github.ab2348.RemoteC.svg"
 waybar_target="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/modules/custom-remote-c.jsonc"
+hypr_target="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/userprefs.d/remote-c-client-persistent-size.conf"
 
 if ! python3 -c 'import gi; gi.require_version("Gtk", "4.0"); gi.require_version("WebKit", "6.0")' 2>/dev/null; then
     echo "Faltan dependencias: instala gtk4, webkitgtk-6.0 y python-gobject." >&2
@@ -24,6 +26,11 @@ install -Dm755 "$client_source" "$client_target"
 install -Dm644 "$desktop_source" "$desktop_target"
 install -Dm644 "$icon_source" "$icon_target"
 install -Dm644 "$waybar_source" "$waybar_target"
+install -Dm644 "$hypr_source" "$hypr_target"
+
+if command -v hyprctl >/dev/null 2>&1; then
+    hyprctl reload >/dev/null 2>&1 || true
+fi
 
 if [[ "${1:-}" == "--integrate-waybar" ]]; then
     python3 "$waybar_configurator"
@@ -41,6 +48,7 @@ fi
 echo "Cliente instalado en $client_target"
 echo "Lanzador instalado como io.github.ab2348.RemoteC"
 echo "Módulo de Waybar instalado en $waybar_target"
+echo "Regla flotante persistente de Hyprland instalada en $hypr_target"
 if [[ "${1:-}" != "--integrate-waybar" ]]; then
     echo "Waybar aún no fue modificado. Para integrarlo:"
     echo "  $0 --integrate-waybar"

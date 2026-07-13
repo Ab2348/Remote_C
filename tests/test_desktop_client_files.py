@@ -32,5 +32,30 @@ class WaybarModuleTests(unittest.TestCase):
         )
 
 
+class HyprlandRuleTests(unittest.TestCase):
+    def test_remote_c_opens_floating_and_remembers_its_size(self):
+        rule = (
+            ROOT / "deploy" / "hypr" / "remote-c-client.conf"
+        ).read_text(encoding="utf-8")
+        match = r"match:class ^(io\.github\.ab2348\.RemoteC)$"
+
+        self.assertIn(f"windowrule = float on, {match}", rule)
+        self.assertIn(f"windowrule = persistent_size on, {match}", rule)
+
+    def test_install_and_uninstall_manage_the_hyprland_rule(self):
+        install_script = (
+            ROOT / "deploy" / "install-desktop-client.sh"
+        ).read_text(encoding="utf-8")
+        uninstall_script = (
+            ROOT / "deploy" / "uninstall-desktop-client.sh"
+        ).read_text(encoding="utf-8")
+        target = "remote-c-client-persistent-size.conf"
+
+        self.assertIn(target, install_script)
+        self.assertIn('install -Dm644 "$hypr_source" "$hypr_target"', install_script)
+        self.assertIn(target, uninstall_script)
+        self.assertIn('"$hypr_target"', uninstall_script)
+
+
 if __name__ == "__main__":
     unittest.main()

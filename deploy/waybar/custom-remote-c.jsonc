@@ -1,0 +1,8 @@
+{
+  "custom/remote-c": {
+    "format": "󰍹",
+    "tooltip": true,
+    "tooltip-format": "Remote C",
+    "on-click": "gtk-launch io.github.ab2348.RemoteC"
+  }
+}

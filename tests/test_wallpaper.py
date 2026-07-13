@@ -29,6 +29,18 @@ class HydeWallpaperServiceTests(unittest.TestCase):
             self.assertEqual(asset.path, thumbnail)
             self.assertEqual(asset.media_type, "image/png")
 
+    def test_frontend_bootstraps_the_last_wallpaper_without_a_first_fade(self) -> None:
+        static = Path(__file__).parents[1] / "app" / "static"
+        script = (static / "wallpaper.js").read_text(encoding="utf-8")
+        styles = (static / "shell.css").read_text(encoding="utf-8")
+
+        self.assertIn('STORAGE_KEY = "remote-c:last-wallpaper"', script)
+        self.assertIn("readCachedWallpaper()", script)
+        self.assertIn("rememberWallpaper(state)", script)
+        self.assertIn('classList.add("is-initial-paint")', script)
+        self.assertIn(".wallpaper-background.is-initial-paint", styles)
+        self.assertIn("transition: none", styles)
+
     def test_uses_the_original_when_thumbnail_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             cache = Path(directory)

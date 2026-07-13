@@ -65,7 +65,7 @@
   --status-online-background: rgba(12, 81, 46, 0.34);
 }
 
-html.has-dark-foreground {
+.has-dark-foreground {
   color-scheme: light;
   --text: #070b11;
   --muted: #2f3a48;
@@ -75,4 +75,5 @@ html.has-dark-foreground {
   --border: rgba(5, 11, 22, 0.14);
   --border-strong: rgba(5, 11, 22, 0.24);
   --glass-border: rgba(5, 11, 22, 0.18);
+  color: var(--text);
 }

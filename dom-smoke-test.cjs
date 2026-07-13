@@ -50,17 +50,27 @@ let wallpaperSampleChannel = 255;
 window.HTMLCanvasElement.prototype.getContext = () => ({
   clearRect() {},
   drawImage() {},
-  getImageData() {
-    return {
-      data: new Uint8ClampedArray([
-        wallpaperSampleChannel,
-        wallpaperSampleChannel,
-        wallpaperSampleChannel,
-        255,
-      ]),
-    };
+  getImageData(_x, _y, width, height) {
+    const data = new Uint8ClampedArray(width * height * 4);
+    for (let index = 0; index < data.length; index += 4) {
+      data[index] = wallpaperSampleChannel;
+      data[index + 1] = wallpaperSampleChannel;
+      data[index + 2] = wallpaperSampleChannel;
+      data[index + 3] = 255;
+    }
+    return { data };
   },
 });
+for (const surface of window.document.querySelectorAll(".header, .panel")) {
+  surface.getBoundingClientRect = () => ({
+    top: 0,
+    right: 320,
+    bottom: 240,
+    left: 0,
+    width: 320,
+    height: 240,
+  });
+}
 
 for (const script of [
   "feedback.js",
@@ -183,15 +193,19 @@ initialWallpaper.onload();
 if (!window.document.querySelector("#wallpaper-background").classList.contains("has-wallpaper")) {
   throw new Error("wallpaper no activado tras cargar");
 }
-if (!window.document.documentElement.classList.contains("has-dark-foreground")) {
-  throw new Error("contraste oscuro no aplicado sobre wallpaper claro");
+if (![...window.document.querySelectorAll(".header, .panel")].every(
+  (surface) => surface.classList.contains("has-dark-foreground"),
+)) {
+  throw new Error("contraste oscuro no aplicado por bloque sobre wallpaper claro");
 }
 wallpaperSampleChannel = 0;
 window.document.dispatchEvent(new window.CustomEvent("remote-c:wallpaper-loaded", {
   detail: { image: initialWallpaper },
 }));
-if (!window.document.documentElement.classList.contains("has-light-foreground")) {
-  throw new Error("contraste claro no aplicado sobre wallpaper oscuro");
+if (![...window.document.querySelectorAll(".header, .panel")].every(
+  (surface) => surface.classList.contains("has-light-foreground"),
+)) {
+  throw new Error("contraste claro no aplicado por bloque sobre wallpaper oscuro");
 }
 
 const text = (selector) => window.document.querySelector(selector).textContent;

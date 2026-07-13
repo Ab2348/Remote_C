@@ -12,6 +12,11 @@
   opacity: 1;
 }
 
+.wallpaper-background.is-initial-paint,
+.wallpaper-background.is-initial-paint .wallpaper-layer {
+  transition: none;
+}
+
 .wallpaper-layer {
   position: absolute;
   width: 100%;

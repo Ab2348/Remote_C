@@ -1,4 +1,4 @@
-const CACHE_NAME = "remote-c-v25-adaptive-contrast";
+const CACHE_NAME = "remote-c-v26-wallpaper-bootstrap";
 const APP_SHELL = [
   "/",
   "/theme.css",

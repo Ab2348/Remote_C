@@ -46,6 +46,21 @@ window.EventSource = EventSourceStub;
 window.fetch = async () => { throw new Error("fetch inesperado"); };
 window.navigator.vibrate = () => true;
 window.CSS = { escape: (value) => value };
+let wallpaperSampleChannel = 255;
+window.HTMLCanvasElement.prototype.getContext = () => ({
+  clearRect() {},
+  drawImage() {},
+  getImageData() {
+    return {
+      data: new Uint8ClampedArray([
+        wallpaperSampleChannel,
+        wallpaperSampleChannel,
+        wallpaperSampleChannel,
+        255,
+      ]),
+    };
+  },
+});
 
 for (const script of [
   "feedback.js",
@@ -55,6 +70,7 @@ for (const script of [
   "audio-apps.js",
   "brightness.js",
   "output-routing.js",
+  "adaptive-contrast.js",
   "app.js",
 ]) {
   window.eval(fs.readFileSync(`app/static/${script}`, "utf8"));
@@ -159,9 +175,23 @@ EventSourceStub.instance.emit("snapshot", {
 const initialWallpaper = [...window.document.querySelectorAll(".wallpaper-layer")]
   .find((layer) => layer.src.includes("0123456789abcdef0123"));
 if (!initialWallpaper) throw new Error("wallpaper versionado no solicitado");
+Object.defineProperties(initialWallpaper, {
+  naturalWidth: { value: 100 },
+  naturalHeight: { value: 100 },
+});
 initialWallpaper.onload();
 if (!window.document.querySelector("#wallpaper-background").classList.contains("has-wallpaper")) {
   throw new Error("wallpaper no activado tras cargar");
+}
+if (!window.document.documentElement.classList.contains("has-dark-foreground")) {
+  throw new Error("contraste oscuro no aplicado sobre wallpaper claro");
+}
+wallpaperSampleChannel = 0;
+window.document.dispatchEvent(new window.CustomEvent("remote-c:wallpaper-loaded", {
+  detail: { image: initialWallpaper },
+}));
+if (!window.document.documentElement.classList.contains("has-light-foreground")) {
+  throw new Error("contraste claro no aplicado sobre wallpaper oscuro");
 }
 
 const text = (selector) => window.document.querySelector(selector).textContent;

@@ -38,7 +38,7 @@
 .brightness-display-value {
   flex: 0 0 auto;
   min-width: 3.2rem;
-  color: #72a0ff;
+  color: var(--contrast-foreground);
   font-size: 1rem;
   font-weight: 760;
   text-align: right;

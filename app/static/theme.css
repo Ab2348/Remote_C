@@ -13,6 +13,7 @@
   --text: #f7f9fc;
   --muted: #98a6bc;
   --muted-strong: #c5cfde;
+  --contrast-foreground: #f5f7fb;
   --accent: #2475ff;
   --accent-strong: #1158e7;
   --accent-pressed: #164fc3;
@@ -62,4 +63,16 @@
   --status-offline-text: #ffc3c9;
   --status-online-border: rgba(40, 212, 111, 0.24);
   --status-online-background: rgba(12, 81, 46, 0.34);
+}
+
+html.has-dark-foreground {
+  color-scheme: light;
+  --text: #070b11;
+  --muted: #2f3a48;
+  --muted-strong: #18212d;
+  --contrast-foreground: #070b11;
+  --section-icon: var(--contrast-foreground);
+  --border: rgba(5, 11, 22, 0.14);
+  --border-strong: rgba(5, 11, 22, 0.24);
+  --glass-border: rgba(5, 11, 22, 0.18);
 }

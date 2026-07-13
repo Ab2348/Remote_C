@@ -1,4 +1,4 @@
-const CACHE_NAME = "remote-c-v24-transparency-toggle";
+const CACHE_NAME = "remote-c-v25-adaptive-contrast";
 const APP_SHELL = [
   "/",
   "/theme.css",
@@ -20,6 +20,7 @@ const APP_SHELL = [
   "/output-routing.js",
   "/feedback.js",
   "/wallpaper.js",
+  "/adaptive-contrast.js",
   "/manifest.webmanifest",
   "/icon.svg",
 ];

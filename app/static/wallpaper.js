@@ -12,6 +12,7 @@
     requestToken += 1;
     currentRevision = null;
     background.classList.remove("has-wallpaper");
+    document.dispatchEvent(new CustomEvent("remote-c:wallpaper-unavailable"));
   }
 
   function renderWallpaper(state) {
@@ -37,6 +38,9 @@
       currentRevision = state.revision;
       nextLayer.onload = null;
       nextLayer.onerror = null;
+      document.dispatchEvent(new CustomEvent("remote-c:wallpaper-loaded", {
+        detail: { image: nextLayer },
+      }));
     };
 
     nextLayer.onerror = () => {

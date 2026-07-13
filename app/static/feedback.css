@@ -20,6 +20,8 @@
 }
 
 .global-feedback {
+  --text: #f7f9fc;
+  --muted-strong: #c5cfde;
   position: fixed;
   z-index: 20;
   right: max(0.9rem, env(safe-area-inset-right));

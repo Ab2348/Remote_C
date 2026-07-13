@@ -135,7 +135,7 @@
 
 .audio-application-volume output {
   min-width: 3.35rem;
-  color: #72a0ff;
+  color: var(--contrast-foreground);
   font-size: 0.86rem;
   font-weight: 740;
   text-align: right;
@@ -165,6 +165,7 @@
 .audio-application-mute[aria-pressed="true"] {
   border-color: rgba(255, 161, 93, 0.42);
   background: rgba(121, 64, 21, 0.62);
+  color: #ffd2a8;
 }
 
 .audio-application-output {

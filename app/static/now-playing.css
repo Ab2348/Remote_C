@@ -10,7 +10,7 @@
   height: 1.25rem;
   align-items: flex-end;
   gap: 0.16rem;
-  color: #397dfd;
+  color: var(--contrast-foreground);
   opacity: 0.48;
 }
 
@@ -192,7 +192,11 @@
   display: grid;
   min-height: 3.3rem;
   place-items: center;
-  color: #dce4f1;
+  color: var(--contrast-foreground);
+}
+
+.media-controls .media-control-button.primary-control {
+  color: #fff;
 }
 
 .media-controls .media-control-button svg {

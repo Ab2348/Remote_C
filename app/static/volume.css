@@ -24,7 +24,7 @@
   width: 1.75rem;
   height: 1.75rem;
   place-items: center;
-  color: #78a5ff;
+  color: var(--contrast-foreground);
 }
 
 .volume-leading-icon svg {
@@ -74,7 +74,7 @@
   border-radius: 50%;
   appearance: none;
   -webkit-appearance: none;
-  background: #f5f7fb;
+  background: var(--contrast-foreground);
   box-shadow:
     0 3px 10px rgba(0, 0, 0, 0.34),
     0 0 0 1px rgba(255, 255, 255, 0.32);
@@ -100,7 +100,7 @@
   height: 1.36rem;
   border: 0;
   border-radius: 50%;
-  background: #f5f7fb;
+  background: var(--contrast-foreground);
   box-shadow:
     0 3px 10px rgba(0, 0, 0, 0.34),
     0 0 0 1px rgba(255, 255, 255, 0.32);
@@ -108,7 +108,7 @@
 
 .volume-percentage {
   min-width: 3.2rem;
-  color: #5f91ff;
+  color: var(--contrast-foreground);
   font-size: 1rem;
   font-weight: 760;
   line-height: 1;
@@ -126,7 +126,7 @@
   padding: 0;
   place-items: center;
   border-radius: 0.88rem;
-  color: #d7dfeb;
+  color: var(--contrast-foreground);
   font-size: 0;
 }
 

@@ -20,7 +20,7 @@ button {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, color 180ms ease, opacity 120ms ease;
 }
 
 button:active {
@@ -62,7 +62,7 @@ input[type="range"] {
   width: 100%;
   min-height: 2.75rem;
   margin: 0;
-  accent-color: var(--accent);
+  accent-color: var(--contrast-foreground);
   cursor: pointer;
 }
 
@@ -107,6 +107,7 @@ input[type="range"] {
   border-color: rgba(71, 130, 255, 0.5);
   background: linear-gradient(180deg, var(--accent), var(--accent-strong));
   box-shadow: 0 9px 22px rgba(17, 88, 231, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .primary-control:active {

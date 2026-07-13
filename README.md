@@ -45,3 +45,47 @@ Para ejecutar las pruebas de regresión:
 ```bash
 uv run python -m unittest discover -s tests -v
 ```
+
+## Cliente de escritorio para Arch Linux
+
+El cliente de escritorio usa GTK 4 y WebKitGTK 6 para abrir la misma interfaz
+servida por FastAPI en `http://127.0.0.1:8765/`. No inicia otro backend. La
+aplicación usa el identificador `io.github.ab2348.RemoteC`, por lo que una
+segunda ejecución activa la ventana existente.
+
+Instalar las dependencias del sistema:
+
+```bash
+sudo pacman -S --needed gtk4 webkitgtk-6.0 python-gobject
+```
+
+Instalar el cliente, su entrada de aplicaciones y el módulo de Waybar sin
+modificar todavía el layout activo:
+
+```bash
+./deploy/install-desktop-client.sh
+```
+
+Probarlo desde una terminal o desde el lanzador de aplicaciones:
+
+```bash
+remote-c-client
+```
+
+Cuando la ventana funcione correctamente, integrar el módulo en el layout
+`carlos-clean`:
+
+```bash
+./deploy/install-desktop-client.sh --integrate-waybar
+```
+
+El configurador respalda `config.jsonc`, `layouts/carlos-clean.jsonc` y
+`user-style.css` antes de modificarlos. Para retirar también la integración de
+Waybar:
+
+```bash
+./deploy/uninstall-desktop-client.sh --integrate-waybar
+```
+
+La URL puede sustituirse para una prueba mediante `REMOTE_C_URL`. Los extras de
+desarrollo de WebKit se habilitan únicamente con `REMOTE_C_DEBUG=1`.

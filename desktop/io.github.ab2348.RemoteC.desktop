@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Remote C
+GenericName=Control del equipo
+Comment=Controla audio, reproducción y brillo del equipo
+Exec=remote-c-client
+Icon=io.github.ab2348.RemoteC
+Terminal=false
+Categories=Utility;AudioVideo;
+StartupNotify=true
+StartupWMClass=io.github.ab2348.RemoteC
+DBusActivatable=false
+Keywords=audio;volume;media;brightness;remote;
